@@ -19,9 +19,11 @@ import {
   Tag,
   Loader2,
   ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import Navbar from "../common/navbar";
 import { performGlobalSearch, getUserDataByUID } from "../api/FireStore";
+import PaperSummarizer from "../components/PaperSummarizer";
 import { auth } from "../firebaseConfig";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig";
@@ -40,6 +42,10 @@ const SearchResults = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [sortBy, setSortBy] = useState("relevance");
   const [userProfiles, setUserProfiles] = useState({});
+  const [summarizerModal, setSummarizerModal] = useState({
+    isOpen: false,
+    post: null,
+  });
 
   const query = searchParams.get("q") || "";
   const category = searchParams.get("category") || "all";
@@ -384,6 +390,12 @@ const SearchResults = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
+      <PaperSummarizer
+        isOpen={summarizerModal.isOpen}
+        onClose={() => setSummarizerModal({ isOpen: false, post: null })}
+        post={summarizerModal.post}
+      />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -556,20 +568,36 @@ const SearchResults = () => {
                       )}
 
                       {/* Post Stats */}
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4" />
-                          <span>{post.likes || 0}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>{post.comments || 0}</span>
-                        </div>
-                        {post.fileURL && (
+                      <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
+                        <div className="flex items-center space-x-6">
                           <div className="flex items-center space-x-1">
-                            <Download className="h-4 w-4" />
-                            <span>File attached</span>
+                            <Heart className="h-4 w-4" />
+                            <span>{post.likes || 0}</span>
                           </div>
+                          <div className="flex items-center space-x-1">
+                            <MessageCircle className="h-4 w-4" />
+                            <span>{post.comments || 0}</span>
+                          </div>
+                          {post.fileURL && (
+                            <div className="flex items-center space-x-1">
+                              <Download className="h-4 w-4" />
+                              <span>File attached</span>
+                            </div>
+                          )}
+                        </div>
+                        {(post.postType === "research" ||
+                          post.type === "research" ||
+                          post.postType === "research-paper" ||
+                          post.type === "research-paper" ||
+                          post.fileType?.includes("pdf") ||
+                          post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                          <button
+                            onClick={() => setSummarizerModal({ isOpen: true, post })}
+                            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-semibold transition-colors cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>AI Summary</span>
+                          </button>
                         )}
                       </div>
                     </div>

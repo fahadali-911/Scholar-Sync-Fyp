@@ -11,10 +11,12 @@ import {
   Eye,
   Globe,
   Lock,
+  BookOpen,
 } from "lucide-react";
 import FireStore, { getUserDataByUID } from "../api/FireStore";
 import { getAuth } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import CitationSuggester from "../components/CitationSuggester";
 
 const CreatePost = ({ isOpen, setIsOpen, currUser }) => {
   const [postType, setPostType] = useState("discussion");
@@ -25,6 +27,11 @@ const CreatePost = ({ isOpen, setIsOpen, currUser }) => {
   const [userData, setUserData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileData, setFileData] = useState(null);
+  const [isCitationOpen, setIsCitationOpen] = useState(false);
+
+  const handleInsertCitations = (citationsText) => {
+    setContent((prev) => prev + citationsText);
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -355,6 +362,15 @@ const CreatePost = ({ isOpen, setIsOpen, currUser }) => {
                       {label}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setIsCitationOpen(true)}
+                    disabled={isSubmitting}
+                    className="flex items-center px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-medium"
+                  >
+                    <BookOpen className="w-4 h-4 mr-1" />
+                    Suggest Citations
+                  </button>
                 </div>
                 <span className="text-sm text-gray-500">
                   {content.length}/2000 characters
@@ -525,6 +541,13 @@ const CreatePost = ({ isOpen, setIsOpen, currUser }) => {
           </div>
         </div>
       </div>
+      <CitationSuggester
+        isOpen={isCitationOpen}
+        onClose={() => setIsCitationOpen(false)}
+        title={title}
+        content={content}
+        onInsertCitations={handleInsertCitations}
+      />
     </div>
   );
 };

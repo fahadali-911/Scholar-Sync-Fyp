@@ -3634,3 +3634,21 @@ export const deletePost = async (postId) => {
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Save / Cache AI generated summary for a post in Firestore
+ */
+export const savePostSummary = async (postId, summary) => {
+  try {
+    const postRef = doc(docRef, postId);
+    await updateDoc(postRef, {
+      aiSummary: summary,
+      summaryUpdatedAt: new Date(),
+    });
+    console.log("AI Summary cached for post:", postId);
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving post summary:", error);
+    return { success: false, error: error.message };
+  }
+};

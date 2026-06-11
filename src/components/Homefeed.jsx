@@ -21,11 +21,13 @@ import {
   MessageSquare,
   Code,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import CreatePost from "../pages/CreatePost";
 import LikesModal from "../components/LikesModal";
 import { useNavigate } from "react-router-dom";
 import CommentsModal from "../components/CommentsModal";
+import PaperSummarizer from "./PaperSummarizer";
 
 const Homefeed = ({ currUser }) => {
   const [activeFilter, setActiveFilter] = useState("all");
@@ -42,6 +44,10 @@ const Homefeed = ({ currUser }) => {
     postId: null,
     postTitle: "",
     totalComments: 0,
+  });
+  const [summarizerModal, setSummarizerModal] = useState({
+    isOpen: false,
+    post: null,
   });
 
   const [userProfiles, setUserProfiles] = useState({});
@@ -531,6 +537,13 @@ const Homefeed = ({ currUser }) => {
             totalComments={commentsModal.totalComments}
           />
 
+          {/* Paper Summarizer Modal */}
+          <PaperSummarizer
+            isOpen={summarizerModal.isOpen}
+            onClose={() => setSummarizerModal({ isOpen: false, post: null })}
+            post={summarizerModal.post}
+          />
+
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-6 sm:mb-8">
             {/* Feed Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -728,6 +741,14 @@ const Homefeed = ({ currUser }) => {
                                 >
                                   Download
                                 </button>
+                                {(post.fileType?.includes("pdf") || post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                                  <button
+                                    onClick={() => setSummarizerModal({ isOpen: true, post })}
+                                    className="px-2 sm:px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs sm:text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Sparkles className="w-3 h-3" /> Summarize
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -785,6 +806,20 @@ const Homefeed = ({ currUser }) => {
                             <Share2 className="w-4 h-4" />
                             <span>Share</span>
                           </button>
+                          {(post.postType === "research" ||
+                            post.type === "research" ||
+                            post.postType === "research-paper" ||
+                            post.type === "research-paper" ||
+                            post.fileType?.includes("pdf") ||
+                            post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                            <button
+                              onClick={() => setSummarizerModal({ isOpen: true, post })}
+                              className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-200 cursor-pointer"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>AI Summary</span>
+                            </button>
+                          )}
                         </div>
                         {(post.postType === "research-paper" ||
                           post.type === "research-paper") &&

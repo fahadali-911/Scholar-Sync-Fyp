@@ -17,11 +17,13 @@ import {
   Loader2,
   MoreVertical,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LikesModal from "./LikesModal";
 import CommentsModal from "../components/CommentsModal";
 import ProfileAvatar from "../components/ProfileAvatar";
+import PaperSummarizer from "./PaperSummarizer";
 
 export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
   const [posts, setPosts] = useState([]);
@@ -40,6 +42,10 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
   });
   const [likingStates, setLikingStates] = useState({});
   const [userProfiles, setUserProfiles] = useState({});
+  const [summarizerModal, setSummarizerModal] = useState({
+    isOpen: false,
+    post: null,
+  });
 
   const [deletingStates, setDeletingStates] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState({
@@ -522,6 +528,13 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
         totalComments={commentsModal.totalComments}
       />
 
+      {/* Paper Summarizer Modal */}
+      <PaperSummarizer
+        isOpen={summarizerModal.isOpen}
+        onClose={() => setSummarizerModal({ isOpen: false, post: null })}
+        post={summarizerModal.post}
+      />
+
       {showDeleteModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -758,6 +771,14 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
                         >
                           Download
                         </button>
+                        {(post.fileType?.includes("pdf") || post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                          <button
+                            onClick={() => setSummarizerModal({ isOpen: true, post })}
+                            className="px-2 sm:px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs sm:text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Sparkles className="w-3 h-3" /> Summarize
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -815,6 +836,20 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
                     <Share2 className="w-4 h-4" />
                     <span>Share</span>
                   </button>
+                  {(post.postType === "research" ||
+                    post.type === "research" ||
+                    post.postType === "research-paper" ||
+                    post.type === "research-paper" ||
+                    post.fileType?.includes("pdf") ||
+                    post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                    <button
+                      onClick={() => setSummarizerModal({ isOpen: true, post })}
+                      className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-300 cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>AI Summary</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Action Buttons Based on Post Type */}
