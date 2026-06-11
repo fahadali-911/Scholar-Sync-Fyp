@@ -7,6 +7,7 @@ import { auth, db } from "../firebaseConfig";
 import { provider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import ScholarSyncLogo from "./ScholarSyncLogo";
 const LoginComp = () => {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({});
@@ -57,11 +58,9 @@ const LoginComp = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#F4F4F4]">
       <div className="w-full max-w-sm text-center">
-        <img
-          src="logo.jpeg"
-          alt="ResearchHub Logo"
-          className=" ml-16 mb-10 w-64 h-auto "
-        />
+        <div className="w-64 mx-auto mb-8">
+          <ScholarSyncLogo theme="light" />
+        </div>
         <h1 className="text-3xl text-[#071B36] font-bold mb-4">Login</h1>
         <p className="text-xs text-gray-600 mb-6">Sign in to continue</p>
 
@@ -114,7 +113,7 @@ const LoginComp = () => {
               <span className="text-sm ">Sign in with google</span>
             </div>
             <p className="text-xs text-gray-600 mt-4">
-              New on Research Hub?{" "}
+              New on Scholar Sync?{" "}
               <span
                 className="text-[#071B36] font-semibold cursor-pointer"
                 onClick={() => navigate("/register")}

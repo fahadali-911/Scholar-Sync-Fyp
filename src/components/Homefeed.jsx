@@ -501,7 +501,7 @@ const Homefeed = ({ currUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50/30">
       {/* Main Container */}
       <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         <div>
@@ -531,10 +531,10 @@ const Homefeed = ({ currUser }) => {
             totalComments={commentsModal.totalComments}
           />
 
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-6 sm:mb-8">
             {/* Feed Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-primary tracking-tight">
                 Academic Feed
               </h1>
 
@@ -548,10 +548,10 @@ const Homefeed = ({ currUser }) => {
                   <button
                     key={tab.key}
                     onClick={() => handleFilterChange(tab.key)}
-                    className={`px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
                       activeFilter === tab.key
-                        ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform -translate-y-0.5"
-                        : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     }`}
                   >
                     {tab.label}
@@ -583,7 +583,7 @@ const Homefeed = ({ currUser }) => {
                       key={`post-${post.id}-${
                         currentProfile.updatedAt || index
                       }`} // Dynamic key based on profile updates
-                      className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                      className="premium-card p-4 sm:p-6"
                       style={{
                         animationDelay: `${index * 100}ms`,
                       }}
@@ -625,7 +625,7 @@ const Homefeed = ({ currUser }) => {
 
                       {/* Post Content */}
                       <div className="mb-4">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors">
+                        <h2 className="text-xl font-bold text-primary mb-2 hover:text-accent cursor-pointer transition-colors">
                           {post.title || post.status}
                         </h2>
                         <p className="text-gray-600 leading-relaxed">
@@ -639,7 +639,7 @@ const Homefeed = ({ currUser }) => {
                           {post.tags.map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 cursor-pointer transition-colors"
+                              className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-100 rounded-full text-xs sm:text-sm font-medium hover:bg-slate-100 hover:text-primary cursor-pointer transition-colors"
                             >
                               {tag}
                             </span>
@@ -739,10 +739,10 @@ const Homefeed = ({ currUser }) => {
                           <button
                             onClick={() => handleLike(post.id)}
                             disabled={likingStates[post.id]}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                               isPostLikedByCurrentUser(post)
-                                ? "bg-red-500 text-white shadow-lg"
-                                : "bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600"
+                                ? "bg-red-500 text-white shadow-sm"
+                                : "bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-600"
                             } ${
                               likingStates[post.id]
                                 ? "opacity-50 cursor-not-allowed"
@@ -773,14 +773,14 @@ const Homefeed = ({ currUser }) => {
                           </button>
                           <button
                             onClick={() => handleCommentsClick(post)}
-                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300"
+                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-primary transition-all duration-200 cursor-pointer"
                           >
                             <MessageCircle className="w-4 h-4" />
                             <span>Comment ({post.comments || 0})</span>
                           </button>
                           <button
                             onClick={() => handleShare(post)}
-                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-600 transition-all duration-300"
+                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-accent transition-all duration-200 cursor-pointer"
                           >
                             <Share2 className="w-4 h-4" />
                             <span>Share</span>
@@ -805,7 +805,7 @@ const Homefeed = ({ currUser }) => {
                             // For images: only show preview button
                             <button
                               onClick={() => handleFilePreview(post)}
-                              className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300"
+                              className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary-light transition-all duration-200 cursor-pointer"
                             >
                               <Eye className="w-4 h-4" />
                               <span>Preview</span>
@@ -815,7 +815,7 @@ const Homefeed = ({ currUser }) => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleFilePreview(post)}
-                                className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300"
+                                className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary-light transition-all duration-200 cursor-pointer"
                               >
                                 <Eye className="w-4 h-4" />
                                 <span>Preview</span>
@@ -829,7 +829,7 @@ const Homefeed = ({ currUser }) => {
                                   link.click();
                                   document.body.removeChild(link);
                                 }}
-                                className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
+                                className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer"
                               >
                                 <Download className="w-4 h-4" />
                                 <span>Download</span>
@@ -838,7 +838,7 @@ const Homefeed = ({ currUser }) => {
                           ))}
                         {(post.postType === "project" ||
                           post.type === "project") && (
-                          <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-300">
+                          <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer">
                             <Eye className="w-4 h-4" />
                             <span>View Project</span>
                           </button>
@@ -893,7 +893,7 @@ const Homefeed = ({ currUser }) => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r cursor-pointer from-blue-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 flex items-center justify-center z-50"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-primary hover:bg-primary-light cursor-pointer text-white rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center z-50"
         >
           <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>

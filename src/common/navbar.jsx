@@ -28,6 +28,7 @@ import {
   // markAllNotificationsAsRead, // Add this new function import
 } from "../api/FireStore";
 import NotificationsPopup from "../components/NotificationsPopup";
+import ScholarSyncLogo from "../components/ScholarSyncLogo";
 
 const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -431,12 +432,12 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-[#F4F4F4] shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="cursor-pointer" onClick={() => navigate("/home")}>
-              <img className="h-6 sm:h-7" src="/logo.jpeg" alt="Research hub" />
+            <div className="cursor-pointer flex items-center" onClick={() => navigate("/home")}>
+              <ScholarSyncLogo theme="light" className="h-10 sm:h-11 w-auto" width="auto" height="100%" />
             </div>
 
             {/* Desktop Search Bar */}
@@ -453,7 +454,7 @@ const Navbar = () => {
                   onChange={handleSearchInputChange}
                   onKeyPress={handleSearchKeyPress}
                   onFocus={() => searchTerm.trim() && setShowSuggestions(true)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200 bg-slate-50 focus:bg-white text-slate-800 placeholder-slate-400 text-sm"
                 />
 
                 {/* Search Suggestions Dropdown */}
@@ -545,8 +546,8 @@ const Navbar = () => {
                   onClick={item.onClick}
                   className={`p-2 rounded-lg transition-all duration-200 relative cursor-pointer ${
                     item.active
-                      ? "bg-blue-100 text-blue-600"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-primary-light/10 text-primary"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-primary"
                   }`}
                   title={item.label}
                 >
@@ -572,7 +573,7 @@ const Navbar = () => {
                 className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 cursor-pointer"
                 onClick={togglePopup}
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary-light transition-all duration-200">
                   <User className="h-5 w-5 text-white" />
                 </div>
               </button>

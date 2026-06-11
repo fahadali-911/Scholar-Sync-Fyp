@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { updateProfile } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { postUserData } from "../api/FireStore";
+import ScholarSyncLogo from "./ScholarSyncLogo";
 
 const SignupComp = () => {
   const navigate = useNavigate();
@@ -38,11 +39,9 @@ const SignupComp = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#F4F4F4]">
       <div className="w-full max-w-sm text-center">
-        <img
-          src="logo.jpeg"
-          alt="ResearchHub Logo"
-          className=" ml-16 mb-7 w-64 h-auto "
-        />
+        <div className="w-64 mx-auto mb-6">
+          <ScholarSyncLogo theme="light" />
+        </div>
         <h1 className="text-2xl sm:text-4xl black font-bold mb-7">
           Learn Share Grow
         </h1>
@@ -128,7 +127,7 @@ const SignupComp = () => {
             </button>
 
             <p className="text-xs text-gray-600 mt-4">
-              Already on Research Hub?{" "}
+              Already on Scholar Sync?{" "}
               <span
                 className="text-[#071B36] font-semibold cursor-pointer"
                 onClick={() => navigate("/login")}

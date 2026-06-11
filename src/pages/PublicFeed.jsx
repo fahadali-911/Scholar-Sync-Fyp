@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ScholarSyncLogo from "../components/ScholarSyncLogo";
 
 const PublicFeed = () => {
   const [activeFilter, setActiveFilter] = useState("all");
@@ -354,35 +355,35 @@ const PublicFeed = () => {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading Research Hub...</p>
+          <p className="text-gray-600">Loading Scholar Sync...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50/30">
       {/* Header */}
-      <header className="bg-[#F4F4F4] border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
-            <div className="cursor-pointer" onClick={() => navigate("/home")}>
-              <img className="h-6 sm:h-7" src="/logo.jpeg" alt="Research hub" />
+            <div className="cursor-pointer flex items-center" onClick={() => navigate("/home")}>
+              <ScholarSyncLogo theme="light" className="h-10 sm:h-11 w-auto" width="auto" height="100%" />
             </div>
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => navigate("/login")}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary rounded-lg hover:bg-slate-50 transition-all duration-200"
               >
                 <LogIn className="w-4 h-4" />
                 <span className="hidden sm:inline">Log In</span>
               </button>
               <button
                 onClick={() => navigate("/register")}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
                 <span className="hidden sm:inline">Sign Up</span>
@@ -393,29 +394,29 @@ const PublicFeed = () => {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 sm:py-16">
+      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50/20 py-16 sm:py-20 border-b border-slate-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-primary tracking-tight mb-6">
             Discover Academic{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Research & Collaboration
             </span>
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             Join thousands of researchers, students, and academics sharing
             knowledge, collaborating on projects, and advancing science
             together.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+              className="px-8 py-3 bg-primary hover:bg-primary-light text-white rounded-lg font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
             >
-              Join Research Hub
+              Join Scholar Sync
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="px-8 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300"
+              className="px-8 py-3 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer w-full sm:w-auto"
             >
               Log In
             </button>
@@ -447,13 +448,13 @@ const PublicFeed = () => {
                 { key: "discussions", label: "Discussions" },
                 { key: "projects", label: "Projects" },
               ].map((tab) => (
-                <button
+                 <button
                   key={tab.key}
                   onClick={() => handleFilterChange(tab.key)}
-                  className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer ${
                     activeFilter === tab.key
-                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-                      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                   }`}
                 >
                   {tab.label}
@@ -470,12 +471,12 @@ const PublicFeed = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   No posts yet
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-slate-500 mb-4">
                   Be the first to share your research!
                 </p>
                 <button
                   onClick={() => navigate("/register")}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-light text-white rounded-lg font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
                 >
                   Join Now
                 </button>
@@ -601,7 +602,7 @@ const PublicFeed = () => {
                         post.fileURL && (
                           <button
                             onClick={() => handleAuthRequired("download")}
-                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300"
+                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary-light transition-all duration-200 cursor-pointer"
                           >
                             <Download className="w-4 h-4" />
                             <span>Download PDF</span>
@@ -612,7 +613,7 @@ const PublicFeed = () => {
                         post.type === "project") && (
                         <button
                           onClick={() => handleAuthRequired("profile")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                           <span>View Project</span>
@@ -657,25 +658,25 @@ const PublicFeed = () => {
       </div>
 
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-12 sm:py-16">
+      <div className="bg-primary py-16 sm:py-20 border-t border-slate-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 tracking-tight">
             Ready to Join the Community?
           </h3>
-          <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
             Connect with researchers worldwide, share your work, and collaborate
             on groundbreaking projects.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+              className="px-8 py-3 bg-white text-primary rounded-lg font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
             >
               Sign Up Free
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300"
+              className="px-8 py-3 border border-slate-700 text-white rounded-lg font-medium hover:bg-white/5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
             >
               Log In
             </button>

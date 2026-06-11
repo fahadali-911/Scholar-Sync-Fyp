@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+  <defs>
+    <!-- Import Premium Fonts -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&amp;display=swap');
+      .logo-text-scholar {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-weight: 800;
+        font-size: 32px;
+        fill: #071B36;
+      }
+      .logo-text-sync {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-weight: 500;
+        font-size: 32px;
+        fill: url(#syncGrad);
+      }
+    </style>
+
+    <!-- Gradients -->
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#071B36" />
+      <stop offset="60%" stop-color="#0F2B48" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+
+    <linearGradient id="syncGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    
+    <!-- Drop Shadow for Premium Depth -->
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#071B36" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Group for Logo Icon -->
+  <g transform="translate(10, 10)" filter="url(#subtleShadow)">
+    <!-- Outer Sync Orbit Arc (Symbolizing flow & digital connection) -->
+    <path d="M 62 18 A 28 28 0 0 1 50 68" fill="none" stroke="url(#syncGrad)" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="1 8 20 20" opacity="0.95" />
+    <path d="M 8 42 A 28 28 0 0 1 20 12" fill="none" stroke="url(#syncGrad)" stroke-width="4.5" stroke-linecap="round" />
+
+    <!-- Mortarboard Diamond (Academic Symbol) - Clean geometric facets -->
+    <!-- Left Cap Facet -->
+    <path d="M 35 15 L 10 27 L 35 39 L 35 15 Z" fill="url(#iconGrad)" />
+    <!-- Right Cap Facet (Slightly lighter to create 3D folding effect) -->
+    <path d="M 35 15 L 60 27 L 35 39 L 35 15 Z" fill="#1E40AF" opacity="0.9" />
+
+    <!-- Gap between cap top and base -->
+    
+    <!-- Cap Base (Refined modern support band) -->
+    <path d="M 20 34.5 C 20 44 26 47 35 47 C 44 47 50 44 50 34.5 C 45 38 39 39 35 39 C 31 39 25 38 20 34.5 Z" fill="url(#iconGrad)" />
+
+    <!-- The Tassel Node (Modernized as a digital connection point) -->
+    <!-- Tassel String -->
+    <path d="M 35 27 L 55 37 L 55 49" fill="none" stroke="url(#accentGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Tassel End/Sync Connection Node -->
+    <circle cx="55" cy="52" r="4.5" fill="url(#accentGrad)" />
+    <circle cx="55" cy="52" r="8" fill="none" stroke="url(#accentGrad)" stroke-width="1" opacity="0.4" />
+  </g>
+
+  <!-- Typography Alignment -->
+  <!-- "Scholar" (Bold, Academic Navy) -->
+  <text x="82" y="49" class="logo-text-scholar">Scholar</text>
+  <!-- "Sync" (Medium-Bold, Tech Cyan Gradient) -->
+  <text x="202" y="49" class="logo-text-sync">Sync</text>
+</svg>

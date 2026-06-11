@@ -1,4 +1,64 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #071B36;
+  --color-primary-dark: #030F22;
+  --color-primary-light: #0f2b48;
+  
+  --color-accent: #0ea5e9;
+  --color-accent-dark: #0284c7;
+  --color-accent-light: #f0f9ff;
+  
+  --color-neutral-dark: #0f172a;
+  --color-neutral-light: #f8fafc;
+  --color-neutral-border: #f1f5f9;
+}
+
+/* Custom premium styles */
+.premium-card {
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(7, 27, 54, 0.05);
+  border-color: #e2e8f0;
+}
+
+.premium-button-primary {
+  background-color: #071B36;
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.premium-button-primary:hover {
+  background-color: #030F22;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(7, 27, 54, 0.12);
+}
+
+.premium-button-secondary {
+  background-color: #ffffff;
+  color: #071B36;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.premium-button-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
 /* From Uiverse.io by abrahamcalsin */
 .dot-spinner {
   --uib-size: 2.8rem;
