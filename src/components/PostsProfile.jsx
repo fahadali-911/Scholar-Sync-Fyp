@@ -22,13 +22,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import LikesModal from "./LikesModal";
 import CommentsModal from "../components/CommentsModal";
-import ProfileAvatar from "../components/ProfileAvatar";
 import PaperSummarizer from "./PaperSummarizer";
 
 export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userPosts, setUserPosts] = useState([]);
+  const [activeTab, setActiveTab] = useState("posts"); // "posts", "papers", "saved"
+
   const [likesModal, setLikesModal] = useState({
     isOpen: false,
     postId: null,
@@ -61,18 +62,17 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
     setLoading(true);
     getStatus(setPosts);
   }, []);
+
   const handleFilePreview = (post) => {
     const fileType = post.fileType?.toLowerCase() || "";
     const fileName = post.fileName || "";
     const fileExtension = fileName.split(".").pop()?.toLowerCase() || "";
 
-    // Check if it's a PDF (can be previewed directly)
     if (fileType === "pdf" || fileExtension === "pdf") {
       window.open(post.fileURL, "_blank");
       return;
     }
 
-    // For DOCX and other Office documents, use Google Docs Viewer
     if (
       fileType === "docx" ||
       fileExtension === "docx" ||
@@ -89,15 +89,12 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
       return;
     }
 
-    // For other file types, try to open directly
     window.open(post.fileURL, "_blank");
   };
 
   useEffect(() => {
     if (posts.length > 0 && currentUser?.email) {
-      // Filter posts for the target user
       const filteredPosts = posts.filter((post) => {
-        // If we have a target user's email, filter by that
         if (currentUser?.email) {
           return post.currUser?.email === currentUser.email;
         }
@@ -107,10 +104,8 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
       setUserPosts(filteredPosts);
       setLoading(false);
     } else if (posts.length === 0 && currentUser?.email) {
-      // If we have the user data but no posts loaded yet, keep loading
       setLoading(true);
     } else {
-      // No posts found, stop loading
       setLoading(false);
     }
   }, [posts, currentUser]);
@@ -120,15 +115,12 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
     if (!userPosts || userPosts.length === 0) return;
 
     const loadUserProfiles = async () => {
-      console.log("Loading user profiles for profile posts...");
       const profilesMap = { ...userProfiles };
-
       const userIds = userPosts
         .map((post) => post.currUser?.uid || post.currUser?.id || post.authorId)
         .filter((id) => id && !profilesMap[id]);
 
       const uniqueUserIds = [...new Set(userIds)];
-
       if (uniqueUserIds.length === 0) return;
 
       const profilePromises = uniqueUserIds.map(async (userId) => {
@@ -199,7 +191,6 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
     };
   }, []);
 
-  // Helper functions for profile management
   const getProfileInitials = (name) => {
     if (!name) return "U";
     return name
@@ -262,7 +253,6 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
     );
   };
 
-  // UserAvatar component
   const UserAvatar = ({ post, size = "lg", onClick }) => {
     const currentProfile = getCurrentUserProfile(post);
     const profileImageURL = getProfileImageURL(post);
@@ -362,25 +352,19 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
       postId: post.id,
       postTitle: post.title || post.status || "this post",
     });
-    // Close dropdown
     setShowDropdown({});
   };
 
   const handleDeleteConfirm = async () => {
     const { postId } = showDeleteModal;
-
     if (!postId) return;
 
     setDeletingStates((prev) => ({ ...prev, [postId]: true }));
 
     try {
       const result = await deletePost(postId);
-
       if (result.success) {
-        console.log("Post deleted successfully");
-        // Close modal
         setShowDeleteModal({ isOpen: false, postId: null, postTitle: "" });
-        // Show success message
         alert("Post deleted successfully!");
       } else {
         console.error("Failed to delete post:", result.error);
@@ -411,16 +395,12 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
       return;
     }
 
-    // Prevent multiple simultaneous like requests for the same post
     if (likingStates[postId]) return;
-
     setLikingStates((prev) => ({ ...prev, [postId]: true }));
 
     try {
       const result = await toggleLikeWithNotification(postId);
-
       if (result.success) {
-        // The posts will be updated automatically through the real-time listener
         console.log("Like toggled successfully");
       } else {
         console.error("Failed to toggle like:", result.error);
@@ -463,7 +443,6 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
   };
 
   const handleShare = (post) => {
-    // Basic share functionality
     if (navigator.share) {
       navigator.share({
         title: post.title,
@@ -471,7 +450,6 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
         url: window.location.href,
       });
     } else {
-      // Fallback - copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       alert("Link copied to clipboard!");
     }
@@ -485,32 +463,60 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
     }
   };
 
-  // Check if current user liked a post
   const isPostLikedByCurrentUser = (post) => {
     if (!auth.currentUser || !post.likedBy) return false;
     return post.likedBy.some((like) => like.uid === auth.currentUser.uid);
   };
 
+  // Filter posts based on active tab
+  const getFilteredPosts = () => {
+    if (activeTab === "posts") {
+      // General posts & discussions, projects
+      return userPosts.filter(
+        (post) => (post.postType || post.type) !== "research-paper"
+      );
+    } else if (activeTab === "papers") {
+      // Research papers only
+      return userPosts.filter(
+        (post) => (post.postType || post.type) === "research-paper"
+      );
+    } else if (activeTab === "saved") {
+      // Placeholder: no saved hubs in backend yet, show empty
+      return [];
+    }
+    return userPosts;
+  };
+
+  const filteredPosts = getFilteredPosts();
+
+  const tabs = [
+    { id: "posts", label: "Posts" },
+    { id: "papers", label: "Research Papers" },
+    { id: "saved", label: "Saved Hubs" },
+  ];
+
   if (loading) {
     return (
-      <div className="mt-10 mx-4 sm:mx-8 lg:mx-16">
-        <div className="text-3xl font-bold mb-8 text-center lg:text-left">
-          {isOwnProfile ? "My Posts" : `${currentUser?.name || "User"}'s Posts`}
+      <div className="w-full flex flex-col gap-6">
+        {/* Stats card loading skeleton */}
+        <div className="glass-card p-6 rounded-2xl animate-pulse">
+          <div className="grid grid-cols-3 divide-x divide-slate-100">
+            <div className="h-12 bg-slate-100 rounded mx-4"></div>
+            <div className="h-12 bg-slate-100 rounded mx-4"></div>
+            <div className="h-12 bg-slate-100 rounded mx-4"></div>
+          </div>
         </div>
-        <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Loading posts...</span>
+        {/* Content loading card */}
+        <div className="glass-card rounded-2xl min-h-[300px] flex flex-col items-center justify-center p-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+          <span className="text-text-muted text-sm font-semibold">Loading academic data...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mt-10 mx-4 sm:mx-8 lg:mx-16">
-      <div className="text-3xl font-bold mb-8 text-center lg:text-left">
-        {isOwnProfile ? "My Posts" : `${currentUser?.name || "User"}'s Posts`}
-      </div>
-
+    <div className="w-full flex flex-col gap-6">
       {/* Likes Modal */}
       <LikesModal
         isOpen={likesModal.isOpen}
@@ -535,6 +541,7 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
         post={summarizerModal.post}
       />
 
+      {/* Delete confirmation modal */}
       {showDeleteModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -542,17 +549,14 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
               <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Delete Post
-              </h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Post</h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete "{showDeleteModal.postTitle}"?
-                This action cannot be undone.
+                Are you sure you want to delete "{showDeleteModal.postTitle}"? This action cannot be undone.
               </p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={handleDeleteCancel}
-                  className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium cursor-pointer"
                   disabled={deletingStates[showDeleteModal.postId]}
                 >
                   Cancel
@@ -560,7 +564,7 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={deletingStates[showDeleteModal.postId]}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {deletingStates[showDeleteModal.postId] ? (
                     <>
@@ -580,398 +584,353 @@ export default function PostsProfile({ currentUser, targetUID, isOwnProfile }) {
         </div>
       )}
 
-      <div className="space-y-6">
-        {userPosts.length === 0 ? (
-          <div className="text-center text-gray-500 text-lg font-medium py-20">
-            <div className="text-4xl mb-4">📝</div>
-            <p>
-              {isOwnProfile
-                ? "No posts yet"
-                : `${
-                    currentUser?.name || "This user"
-                  } hasn't posted anything yet`}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              {isOwnProfile
-                ? "Start creating to share your research or thoughts!"
-                : "Check back later for new content!"}
-            </p>
+      {/* Stats Horizontal Bar */}
+      <div className="backdrop-blur-md bg-white/40 border border-white/20 shadow-[0_8px_30px_rgba(15,23,42,0.02)] p-2 rounded-2xl overflow-hidden relative">
+        <div className="grid grid-cols-3 py-3 relative">
+          
+          {/* Posts Column */}
+          <div 
+            className="flex flex-col items-center justify-center cursor-pointer hover:bg-white/60 hover:scale-[1.02] active:scale-98 transition-all duration-250 py-2.5 rounded-xl group"
+            onClick={() => setActiveTab("posts")}
+          >
+            <span className="text-3xl font-extrabold tracking-tight text-primary transition-transform duration-200 group-hover:scale-105">
+              {userPosts.length}
+            </span>
+            <span className="text-[10px] font-bold tracking-widest text-slate-500/80 uppercase mt-1">
+              Posts
+            </span>
           </div>
-        ) : (
-          userPosts.map((post, index) => (
-            <div
-              key={`profile-post-${post.id}-${
-                getCurrentUserProfile(post).updatedAt || index
-              }`}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300 animate-fade-in-up"
-              style={{
-                animationDelay: `${index * 100}ms`,
-              }}
-            >
-              {/* Post Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <UserAvatar
-                    post={post}
-                    size="lg"
-                    onClick={() => handleProfileClick(post)}
-                  />
-                  <div>
-                    <button
-                      onClick={() => handleProfileClick(post)}
-                      className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                    >
-                      {getUserDisplayName(post)}
-                    </button>
-                    <p className="text-sm text-gray-500">
-                      {post.timeStamp
-                        ? new Date(
-                            post.timeStamp.seconds * 1000
-                          ).toLocaleDateString()
-                        : "Recently"}
-                    </p>
-                  </div>
-                </div>
+          
+          {/* Faded Divider 1 */}
+          <div className="absolute left-1/3 top-3 bottom-3 w-[1.5px] bg-gradient-to-b from-transparent via-slate-200/50 to-transparent"></div>
 
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium border ${getPostTypeStyle(
-                      post.postType || post.type
-                    )}`}
-                  >
-                    {getPostTypeLabel(post.postType || post.type)}
-                  </span>
+          {/* Followers Column */}
+          <div 
+            className="flex flex-col items-center justify-center cursor-pointer hover:bg-white/60 hover:scale-[1.02] active:scale-98 transition-all duration-250 py-2.5 rounded-xl group"
+            onClick={() => console.log("Followers clicked")}
+          >
+            <span className="text-3xl font-extrabold tracking-tight text-primary transition-transform duration-200 group-hover:scale-105">
+              {currentUser?.followers?.length || 0}
+            </span>
+            <span className="text-[10px] font-bold tracking-widest text-slate-500/80 uppercase mt-1">
+              Followers
+            </span>
+          </div>
 
-                  {canDeletePost(post) && (
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleDropdown(post.id);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          {/* Faded Divider 2 */}
+          <div className="absolute left-2/3 top-3 bottom-3 w-[1.5px] bg-gradient-to-b from-transparent via-slate-200/50 to-transparent"></div>
+
+          {/* Following Column */}
+          <div 
+            className="flex flex-col items-center justify-center cursor-pointer hover:bg-white/60 hover:scale-[1.02] active:scale-98 transition-all duration-250 py-2.5 rounded-xl group"
+            onClick={() => console.log("Following clicked")}
+          >
+            <span className="text-3xl font-extrabold tracking-tight text-primary transition-transform duration-200 group-hover:scale-105">
+              {currentUser?.following?.length || 0}
+            </span>
+            <span className="text-[10px] font-bold tracking-widest text-slate-500/80 uppercase mt-1">
+              Following
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Tabs & Content Cards */}
+      <div className="glass-card rounded-2xl min-h-[400px] flex flex-col overflow-hidden bg-white">
+        {/* Tab Selector Header */}
+        <div className="flex border-b border-fine px-6 bg-slate-50/30">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 sm:px-6 py-4 font-bold font-label-md text-label-md transition-all border-b-2 cursor-pointer ${
+                  active
+                    ? "border-primary text-primary"
+                    : "border-transparent text-text-muted hover:text-primary"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab panel contents */}
+        <div className="flex-1 flex flex-col p-6">
+          {filteredPosts.length === 0 ? (
+            /* Encouraging Empty State layout */
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
+              <div className="w-48 h-48 mb-6 opacity-20 relative flex items-center justify-center">
+                <span className="material-symbols-outlined text-[96px] text-primary">draw</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-inverse-surface mb-2">
+                {activeTab === "posts" && "Start the conversation"}
+                {activeTab === "papers" && "Publish your research"}
+                {activeTab === "saved" && "No saved hubs yet"}
+              </h3>
+              <p className="font-body-md text-body-md text-text-muted max-w-sm leading-relaxed mb-6">
+                {activeTab === "posts" &&
+                  "You haven't posted anything yet. Share your first research insight or academic update with your network."}
+                {activeTab === "papers" &&
+                  "No research papers uploaded yet. Share your publications and technical write-ups with the academic community."}
+                {activeTab === "saved" &&
+                  "Bookmark important research papers, articles, and discussions to view them later on your profile."}
+              </p>
+
+              {isOwnProfile && (
+                <button
+                  onClick={() => {
+                    if (activeTab === "saved") {
+                      navigate("/home");
+                    } else {
+                      navigate("/create-post");
+                    }
+                  }}
+                  className="px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-102 active:scale-95 transition-all cursor-pointer"
+                >
+                  {activeTab === "posts" && "Create First Post"}
+                  {activeTab === "papers" && "Upload Paper"}
+                  {activeTab === "saved" && "Explore Academic Feed"}
+                </button>
+              )}
+            </div>
+          ) : (
+            /* Post Cards list */
+            <div className="space-y-6">
+              {filteredPosts.map((post, index) => (
+                <div
+                  key={`profile-post-${post.id}-${
+                    getCurrentUserProfile(post).updatedAt || index
+                  }`}
+                  className="bg-white rounded-xl border border-slate-100 p-5 hover:shadow-md transition-all duration-300 animate-fade-in-up"
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                >
+                  {/* Post Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <UserAvatar
+                        post={post}
+                        size="md"
+                        onClick={() => handleProfileClick(post)}
+                      />
+                      <div>
+                        <button
+                          onClick={() => handleProfileClick(post)}
+                          className="font-semibold text-gray-900 hover:text-primary transition-colors text-sm sm:text-base text-left block"
+                        >
+                          {getUserDisplayName(post)}
+                        </button>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {post.timeStamp
+                            ? new Date(post.timeStamp.seconds * 1000).toLocaleDateString()
+                            : "Recently"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${getPostTypeStyle(
+                          post.postType || post.type
+                        )}`}
                       >
-                        <MoreVertical className="w-4 h-4 text-gray-500" />
-                      </button>
+                        {getPostTypeLabel(post.postType || post.type)}
+                      </span>
 
-                      {/* Dropdown Menu */}
-                      {showDropdown[post.id] && (
-                        <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                      {canDeletePost(post) && (
+                        <div className="relative">
                           <button
-                            onClick={() => handleDeleteClick(post)}
-                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDropdown(post.id);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
+                            <MoreVertical className="w-4 h-4 text-gray-500" />
                           </button>
+
+                          {/* Dropdown Menu */}
+                          {showDropdown[post.id] && (
+                            <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                              <button
+                                onClick={() => handleDeleteClick(post)}
+                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Post Content */}
+                  <div className="mb-4">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 hover:text-primary cursor-pointer transition-colors leading-snug">
+                      {post.title || post.status}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
+                      {post.description || post.excerpt || post.status}
+                    </p>
+                  </div>
+
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {post.tags.map((tag, tagIndex) => (
+                        <span
+                          key={tagIndex}
+                          className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 cursor-pointer transition-colors"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </div>
 
-              {/* Post Content */}
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors">
-                  {post.title || post.status}
-                </h2>
-                <p className="text-gray-600 leading-relaxed">
-                  {post.description || post.excerpt || post.status}
-                </p>
-              </div>
+                  {/* File Attachment */}
+                  {post.fileURL && (
+                    <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 text-primary">
+                          <span className="material-symbols-outlined text-[24px]">
+                            {post.fileType === "pdf" ? "description" : "attachment"}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">
+                            {post.fileName || "Attached Document"}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {post.fileType ? post.fileType.toUpperCase() : "Document"} • Click to interact
+                          </p>
+                        </div>
 
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {post.tags.map((tag, tagIndex) => (
-                    <span
-                      key={tagIndex}
-                      className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 cursor-pointer transition-colors"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {/* File Preview */}
-              {/* File Preview */}
-              {post.fileURL && (
-                <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg sm:text-xl">
-                        {post.fileType === "pdf"
-                          ? "📄"
-                          : post.fileType?.includes("image") ||
-                            [
-                              "jpg",
-                              "jpeg",
-                              "png",
-                              "gif",
-                              "bmp",
-                              "webp",
-                              "svg",
-                            ].includes(
-                              post.fileName?.split(".").pop()?.toLowerCase()
-                            )
-                          ? "🖼️"
-                          : "📎"}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                        {post.fileName || "Attached file"}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">
-                        {post.fileType ? post.fileType.toUpperCase() : "File"} •
-                        Click to view
-                      </p>
-                    </div>
-
-                    {/* Check if it's an image */}
-                    {post.fileType?.includes("image") ||
-                    [
-                      "jpg",
-                      "jpeg",
-                      "png",
-                      "gif",
-                      "bmp",
-                      "webp",
-                      "svg",
-                    ].includes(
-                      post.fileName?.split(".").pop()?.toLowerCase()
-                    ) ? (
-                      // For images: only show preview button
-                      <button
-                        onClick={() => handleFilePreview(post)}
-                        className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-md text-xs sm:text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
-                      >
-                        Preview
-                      </button>
-                    ) : (
-                      // For non-images: show both preview and download buttons
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleFilePreview(post)}
-                          className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-md text-xs sm:text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
-                        >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => {
-                            const link = document.createElement("a");
-                            link.href = post.fileURL;
-                            link.download = post.fileName || "download";
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                          className="px-2 sm:px-3 py-1 bg-green-600 text-white rounded-md text-xs sm:text-sm hover:bg-green-700 transition-colors flex-shrink-0"
-                        >
-                          Download
-                        </button>
-                        {(post.fileType?.includes("pdf") || post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                        <div className="flex flex-wrap gap-1.5">
                           <button
-                            onClick={() => setSummarizerModal({ isOpen: true, post })}
-                            className="px-2 sm:px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs sm:text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1 cursor-pointer"
+                            onClick={() => handleFilePreview(post)}
+                            className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/95 transition-colors cursor-pointer"
                           >
-                            <Sparkles className="w-3 h-3" /> Summarize
+                            Preview
                           </button>
-                        )}
+                          
+                          {!(post.fileType?.includes("image") || [
+                            "jpg", "jpeg", "png", "gif", "webp", "svg"
+                          ].includes(post.fileName?.split(".").pop()?.toLowerCase())) && (
+                            <button
+                              onClick={() => {
+                                const link = document.createElement("a");
+                                link.href = post.fileURL;
+                                link.download = post.fileName || "download";
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                              className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-300 transition-colors cursor-pointer"
+                            >
+                              Download
+                            </button>
+                          )}
+
+                          {(post.fileType?.includes("pdf") || post.fileName?.toLowerCase().endsWith(".pdf")) && (
+                            <button
+                              onClick={() => setSummarizerModal({ isOpen: true, post })}
+                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" /> Summary
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {/* Post Actions */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-4 border-t border-gray-50 gap-4">
-                <div className="flex flex-wrap gap-2 sm:gap-4">
-                  <button
-                    onClick={() => handleLike(post.id)}
-                    disabled={likingStates[post.id]}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                      isPostLikedByCurrentUser(post)
-                        ? "bg-red-500 text-white shadow-lg"
-                        : "bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600"
-                    } ${
-                      likingStates[post.id]
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
-                  >
-                    {likingStates[post.id] ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Heart
-                        className={`w-4 h-4 ${
-                          isPostLikedByCurrentUser(post) ? "fill-current" : ""
-                        }`}
-                      />
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLikesClick(post.id, post.likes || 0);
-                      }}
-                      className="hover:underline"
-                      disabled={likingStates[post.id]}
-                    >
-                      Like ({post.likes || 0})
-                    </button>
-                  </button>
-
-                  <button
-                    onClick={() => handleCommentsClick(post)}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Comment ({post.comments || 0})</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleShare(post)}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-600 transition-all duration-300"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share</span>
-                  </button>
-                  {(post.postType === "research" ||
-                    post.type === "research" ||
-                    post.postType === "research-paper" ||
-                    post.type === "research-paper" ||
-                    post.fileType?.includes("pdf") ||
-                    post.fileName?.toLowerCase().endsWith(".pdf")) && (
-                    <button
-                      onClick={() => setSummarizerModal({ isOpen: true, post })}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-300 cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>AI Summary</span>
-                    </button>
+                    </div>
                   )}
-                </div>
 
-                {/* Action Buttons Based on Post Type */}
-                <div className="flex gap-2">
-                  {(post.postType === "research-paper" ||
-                    post.type === "research-paper") &&
-                    post.fileURL &&
-                    // Check if it's an image
-                    (post.fileType?.includes("image") ||
-                    [
-                      "jpg",
-                      "jpeg",
-                      "png",
-                      "gif",
-                      "bmp",
-                      "webp",
-                      "svg",
-                    ].includes(
-                      post.fileName?.split(".").pop()?.toLowerCase()
-                    ) ? (
-                      // For images: only show preview button
+                  {/* Actions & Engagement bar */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-3 border-t border-slate-100 gap-3">
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        onClick={() => handleFilePreview(post)}
-                        className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300"
+                        onClick={() => handleLike(post.id)}
+                        disabled={likingStates[post.id]}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
+                          isPostLikedByCurrentUser(post)
+                            ? "bg-red-500 text-white shadow"
+                            : "bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-500"
+                        }`}
                       >
-                        <Eye className="w-4 h-4" />
-                        <span>Preview</span>
+                        {likingStates[post.id] ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Heart
+                            className={`w-3.5 h-3.5 ${
+                              isPostLikedByCurrentUser(post) ? "fill-current" : ""
+                            }`}
+                          />
+                        )}
+                        <span>Like</span>
                       </button>
-                    ) : (
-                      // For non-images: show both preview and download buttons
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleFilePreview(post)}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>Preview</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            const link = document.createElement("a");
-                            link.href = post.fileURL;
-                            link.download = post.fileName || "download";
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download</span>
-                        </button>
-                      </div>
-                    ))}
-                  {(post.postType === "project" || post.type === "project") && (
-                    <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-300">
-                      <Eye className="w-4 h-4" />
-                      <span>View Project</span>
-                    </button>
-                  )}
-                </div>
-              </div>
 
-              {/* Engagement Info */}
-              {post.likedBy && post.likedBy.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-50">
-                  <button
-                    onClick={() => handleLikesClick(post.id, post.likes || 0)}
-                    className="text-sm text-gray-500 hover:text-gray-700 hover:underline transition-colors"
-                  >
-                    {post.likedBy.length === 1
-                      ? `Liked by ${
-                          post.likedBy[0].name ||
-                          post.likedBy[0].email?.split("@")[0] ||
-                          "1 person"
-                        }`
-                      : post.likedBy.length === 2
-                      ? `Liked by ${
-                          post.likedBy[0].name ||
-                          post.likedBy[0].email?.split("@")[0] ||
-                          "someone"
-                        } and ${
-                          post.likedBy[1].name ||
-                          post.likedBy[1].email?.split("@")[0] ||
-                          "1 other"
-                        }`
-                      : `Liked by ${
-                          post.likedBy[0].name ||
-                          post.likedBy[0].email?.split("@")[0] ||
-                          "someone"
-                        } and ${post.likedBy.length - 1} others`}
-                  </button>
-                </div>
-              )}
+                      <button
+                        onClick={() => handleCommentsClick(post)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 hover:bg-primary/10 hover:text-primary transition-all duration-200 cursor-pointer"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>Comment</span>
+                      </button>
 
-              {/* Engagement Stats */}
-              <div className="mt-4 pt-3 border-t border-gray-50">
-                <div className="flex justify-between text-sm text-gray-500">
-                  <button
-                    onClick={() => handleLikesClick(post.id, post.likes || 0)}
-                    className="hover:underline"
-                  >
-                    {post.likes || 0} likes
-                  </button>
-                  <div className="flex gap-4">
-                    <span>{post.comments || 0} comments</span>
+                      <button
+                        onClick={() => handleShare(post)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-all duration-200 cursor-pointer"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>Share</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-slate-500 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-none pt-2 sm:pt-0">
+                      <button
+                        onClick={() => handleLikesClick(post.id, post.likes || 0)}
+                        className="hover:underline font-medium hover:text-primary"
+                      >
+                        {post.likes || 0} likes
+                      </button>
+                      <button
+                        onClick={() => handleCommentsClick(post)}
+                        className="hover:underline font-medium hover:text-primary"
+                      >
+                        {post.comments || 0} comments
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
 
-      {/* Load More Button (if needed) */}
-      {userPosts.length > 0 && userPosts.length >= 10 && (
-        <div className="text-center mt-8">
-          <button className="bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-8 rounded-xl border-2 border-gray-300 hover:border-gray-400 transition-all duration-200 hover:shadow-lg">
-            Load More Posts
-          </button>
+                  {/* Engaged summary text */}
+                  {post.likedBy && post.likedBy.length > 0 && (
+                    <div className="mt-2.5 pt-2.5 border-t border-slate-50 text-xs text-slate-400">
+                      <button
+                        onClick={() => handleLikesClick(post.id, post.likes || 0)}
+                        className="hover:underline transition-colors hover:text-primary text-left"
+                      >
+                        Liked by{" "}
+                        <span className="font-semibold text-slate-600">
+                          {post.likedBy[0].name || post.likedBy[0].email?.split("@")[0]}
+                        </span>
+                        {post.likedBy.length > 1 && ` and ${post.likedBy.length - 1} other${post.likedBy.length > 2 ? 's' : ''}`}
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

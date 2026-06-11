@@ -203,20 +203,6 @@ const ProfileImageUpload = ({
               </div>
             )}
           </div>
-
-          {/* Remove button for current image */}
-          {currentImage && !uploading && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleImageRemove();
-              }}
-              className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
-              title="Remove current image"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          )}
         </div>
       )}
 

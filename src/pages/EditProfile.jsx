@@ -21,6 +21,9 @@ const EditProfile = ({ setShowEditPopup }) => {
     location: "",
     institution: "",
     website: "",
+    github: "",
+    linkedin: "",
+    orcid: "",
   });
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
@@ -47,6 +50,9 @@ const EditProfile = ({ setShowEditPopup }) => {
         location: currentUser.location || "",
         institution: currentUser.institution || "",
         website: currentUser.website || "",
+        github: currentUser.github || "",
+        linkedin: currentUser.linkedin || "",
+        orcid: currentUser.orcid || "",
       });
     }
   }, [currentUser]);
@@ -240,6 +246,52 @@ const EditProfile = ({ setShowEditPopup }) => {
                   className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
                   disabled={loading}
                 />
+              </div>
+
+              {/* GitHub, LinkedIn, ORCID */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    GitHub Handle / URL
+                  </label>
+                  <input
+                    onChange={editInputChange}
+                    name="github"
+                    type="text"
+                    value={editInput.github}
+                    placeholder="github.com/username"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    LinkedIn Handle / URL
+                  </label>
+                  <input
+                    onChange={editInputChange}
+                    name="linkedin"
+                    type="text"
+                    value={editInput.linkedin}
+                    placeholder="linkedin.com/in/username"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ORCID iD
+                  </label>
+                  <input
+                    onChange={editInputChange}
+                    name="orcid"
+                    type="text"
+                    value={editInput.orcid}
+                    placeholder="orcid.org/xxxx-xxxx-xxxx-xxxx"
+                    className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                    disabled={loading}
+                  />
+                </div>
               </div>
 
               {/* Bio Field */}

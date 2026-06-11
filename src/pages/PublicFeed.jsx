@@ -362,31 +362,31 @@ const PublicFeed = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/30">
+    <div className="min-h-screen bg-slate-50/20">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-100/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center py-3.5">
             {/* Logo */}
-            <div className="cursor-pointer flex items-center" onClick={() => navigate("/home")}>
+            <div className="cursor-pointer flex items-center transition-opacity hover:opacity-95" onClick={() => navigate("/home")}>
               <ScholarSyncLogo theme="light" className="h-10 sm:h-11 w-auto" width="auto" height="100%" />
             </div>
 
             {/* Auth Buttons */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate("/login")}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary rounded-lg hover:bg-slate-50 transition-all duration-200"
+                className="flex items-center space-x-2 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-primary hover:bg-slate-50/80 rounded-full transition-all duration-200"
               >
-                <LogIn className="w-4 h-4" />
-                <span className="hidden sm:inline">Log In</span>
+                <LogIn className="w-4 h-4 text-slate-500" />
+                <span>Log In</span>
               </button>
               <button
                 onClick={() => navigate("/register")}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+                className="flex items-center space-x-2 px-6 py-2.5 bg-primary hover:bg-primary-light text-white text-sm font-semibold rounded-full shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
-                <span className="hidden sm:inline">Sign Up</span>
+                <span>Sign Up</span>
               </button>
             </div>
           </div>
@@ -394,15 +394,15 @@ const PublicFeed = () => {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50/20 py-16 sm:py-20 border-b border-slate-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-primary tracking-tight mb-6">
-            Discover Academic{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+      <div className="relative overflow-hidden bg-gradient-to-b from-slate-50/50 via-white to-slate-50/30 py-20 sm:py-24 border-b border-slate-100/60">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-primary tracking-tight mb-6 leading-tight font-display-lg">
+            Discover Academic <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
               Research & Collaboration
             </span>
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed font-body-md font-medium">
             Join thousands of researchers, students, and academics sharing
             knowledge, collaborating on projects, and advancing science
             together.
@@ -410,13 +410,13 @@ const PublicFeed = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3 bg-primary hover:bg-primary-light text-white rounded-lg font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
+              className="px-8 py-3.5 bg-primary hover:bg-primary-light text-white rounded-full font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
             >
               Join Scholar Sync
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="px-8 py-3 border border-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all duration-200 cursor-pointer w-full sm:w-auto"
+              className="px-8 py-3.5 border border-slate-200 text-slate-700 rounded-full font-semibold hover:bg-slate-50 hover:border-slate-300 shadow-sm hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
             >
               Log In
             </button>
@@ -427,34 +427,34 @@ const PublicFeed = () => {
       {/* Stats Section */}
 
       {/* Main Feed */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 p-5 sm:p-8">
           {/* Feed Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 pb-6 border-b border-slate-100/80">
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
                 Latest Research & Discussions
               </h3>
-              <p className="text-gray-600">
+              <p className="text-slate-500 text-sm font-medium">
                 Explore what the academic community is sharing
               </p>
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
               {[
                 { key: "all", label: "All" },
                 { key: "papers", label: "Papers" },
                 { key: "discussions", label: "Discussions" },
                 { key: "projects", label: "Projects" },
               ].map((tab) => (
-                 <button
+                <button
                   key={tab.key}
                   onClick={() => handleFilterChange(tab.key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     activeFilter === tab.key
                       ? "bg-primary text-white shadow-sm"
-                      : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                      : "text-slate-500 hover:text-primary hover:bg-white/50"
                   }`}
                 >
                   {tab.label}
@@ -476,7 +476,7 @@ const PublicFeed = () => {
                 </p>
                 <button
                   onClick={() => navigate("/register")}
-                  className="px-6 py-2.5 bg-primary hover:bg-primary-light text-white rounded-lg font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-light text-white rounded-full font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer text-sm"
                 >
                   Join Now
                 </button>
@@ -489,7 +489,7 @@ const PublicFeed = () => {
                 return (
                   <div
                     key={`post-${post.id}-${currentProfile.updatedAt || index}`}
-                    className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                    className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-300"
                   >
                     {/* Post Header */}
                     <div className="flex items-center justify-between mb-4">
@@ -658,25 +658,26 @@ const PublicFeed = () => {
       </div>
 
       {/* Call to Action */}
-      <div className="bg-primary py-16 sm:py-20 border-t border-slate-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 tracking-tight">
+      <div className="bg-gradient-to-br from-primary to-primary-dark py-20 border-t border-slate-900/40 relative overflow-hidden">
+        <div className="absolute inset-0 pattern-overlay opacity-[0.03]"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight font-display-lg">
             Ready to Join the Community?
           </h3>
-          <p className="text-base sm:text-lg text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed font-body-md font-medium">
             Connect with researchers worldwide, share your work, and collaborate
             on groundbreaking projects.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3 bg-white text-primary rounded-lg font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
+              className="px-8 py-3.5 bg-white text-primary rounded-full font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
             >
               Sign Up Free
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="px-8 py-3 border border-slate-700 text-white rounded-lg font-medium hover:bg-white/5 transition-all duration-200 cursor-pointer w-full sm:w-auto"
+              className="px-8 py-3.5 border border-slate-700 text-white rounded-full font-semibold hover:bg-white/5 hover:border-slate-500 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
             >
               Log In
             </button>

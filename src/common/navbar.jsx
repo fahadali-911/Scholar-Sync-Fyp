@@ -29,8 +29,12 @@ import {
 } from "../api/FireStore";
 import NotificationsPopup from "../components/NotificationsPopup";
 import ScholarSyncLogo from "../components/ScholarSyncLogo";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext.jsx";
+import ProfileAvatar from "../components/ProfileAvatar.jsx";
 
 const Navbar = () => {
+  const { userProfileImage, currentUserData } = useContext(UserContext);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -433,15 +437,15 @@ const Navbar = () => {
   return (
     <>
       <nav className="bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="w-full px-6 lg:px-8">
+          <div className="flex justify-start items-center h-16">
             {/* Logo */}
-            <div className="cursor-pointer flex items-center" onClick={() => navigate("/home")}>
+            <div className="cursor-pointer flex items-center justify-start" onClick={() => navigate("/home")}>
               <ScholarSyncLogo theme="light" className="h-10 sm:h-11 w-auto" width="auto" height="100%" />
             </div>
 
             {/* Desktop Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-8 relative">
+            <div className="hidden md:flex flex-1 max-w-lg mx-auto relative">
               <div className="relative w-full">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
@@ -539,19 +543,19 @@ const Navbar = () => {
             </div>
 
             {/* Desktop Navigation Icons */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4 ml-auto">
               {navigationItems.map((item, index) => (
                 <button
                   key={index}
                   onClick={item.onClick}
-                  className={`p-2 rounded-lg transition-all duration-200 relative cursor-pointer ${
+                  className={`p-2 rounded-lg transition-all duration-200 relative cursor-pointer hover:scale-105 active:scale-95 ${
                     item.active
-                      ? "bg-primary-light/10 text-primary"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-primary"
+                      ? "bg-secondary/10 text-secondary"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-secondary"
                   }`}
                   title={item.label}
                 >
-                  <item.icon className="h-6 w-6" />
+                  <item.icon className="h-6 w-6" fill={item.active ? "currentColor" : "none"} />
 
                   {/* Notification Dot */}
                   {item.hasNotification && (
@@ -570,12 +574,16 @@ const Navbar = () => {
 
               {/* Profile Button */}
               <button
-                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 cursor-pointer"
+                className="p-1 rounded-full text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer flex items-center justify-center"
                 onClick={togglePopup}
               >
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary-light transition-all duration-200">
-                  <User className="h-5 w-5 text-white" />
-                </div>
+                <ProfileAvatar
+                  user={{
+                    ...currentUserData,
+                    photoURL: userProfileImage,
+                  }}
+                  size="sm"
+                />
               </button>
             </div>
 
@@ -609,7 +617,7 @@ const Navbar = () => {
             )}
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="md:hidden flex items-center space-x-2 ml-auto">
               {/* Mobile Search Toggle */}
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -680,12 +688,12 @@ const Navbar = () => {
                     onClick={item.onClick}
                     className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 relative cursor-pointer ${
                       item.active
-                        ? "bg-blue-100 text-blue-600"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        ? "bg-secondary/10 text-secondary"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-secondary"
                     }`}
                   >
                     <div className="relative">
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-5 w-5" fill={item.active ? "currentColor" : "none"} />
                       {item.hasNotification && (
                         <div className="absolute -top-2 -right-2 flex items-center justify-center">
                           <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
@@ -707,9 +715,13 @@ const Navbar = () => {
                   className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 cursor-pointer"
                   onClick={togglePopupMobile}
                 >
-                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
+                  <ProfileAvatar
+                    user={{
+                      ...currentUserData,
+                      photoURL: userProfileImage,
+                    }}
+                    size="xs"
+                  />
                   <span className="text-sm font-medium">Profile</span>
                 </button>
 

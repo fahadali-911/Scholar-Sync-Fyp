@@ -1,22 +1,11 @@
-import React, { useState } from "react";
-import {
-  Edit,
-  MapPin,
-  Calendar,
-  Link as LinkIcon,
-  Building2,
-  Users,
-  FileText,
-  Globe,
-  Mail,
-  Phone,
-  MoreHorizontal,
-  MessageCircle,
-  Camera,
-} from "lucide-react";
+import React, { useState, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateConversation, editUser } from "../api/FireStore";
 import ProfileImageUpload from "../components/ProfileImageUpload";
+import { UserContext } from "../context/UserContext.jsx";
+import { Camera, Trash2, Loader2 } from "lucide-react";
+import { uploadFile, validateFile } from "../services/uploadService";
+
 
 export default function ProfileCard({
   currentUser,
@@ -26,13 +15,14 @@ export default function ProfileCard({
   targetUID,
 }) {
   const navigate = useNavigate();
+  const { updateGlobalProfileImage } = useContext(UserContext);
+
+  const fileInputRef = useRef(null);
 
   // Separate states for editing profile and cover
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingCover, setIsEditingCover] = useState(false);
 
   // Preview states
-  const [profilePreview, setProfilePreview] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
 
   // Loading states
@@ -41,7 +31,6 @@ export default function ProfileCard({
 
   const formatDate = (timestamp) => {
     if (!timestamp) return "Recently";
-
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -59,19 +48,6 @@ export default function ProfileCard({
       .substring(0, 2);
   };
 
-  const formatWebsiteUrl = (website) => {
-    if (!website) return "";
-    if (website.startsWith("http://") || website.startsWith("https://")) {
-      return website;
-    }
-    return `https://${website}`;
-  };
-
-  const getWebsiteDisplay = (website) => {
-    if (!website) return "";
-    return website.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  };
-
   const handleSendMessage = async () => {
     if (!targetUID) {
       console.error("No target user ID provided for messaging");
@@ -80,7 +56,6 @@ export default function ProfileCard({
 
     try {
       const result = await getOrCreateConversation(targetUID);
-
       if (result.success) {
         navigate(`/messages?userId=${targetUID}`);
       } else {
@@ -93,38 +68,74 @@ export default function ProfileCard({
     }
   };
 
-  // Handle profile picture preview
-  const handleProfileImagePreview = (imageData) => {
-    setProfilePreview(imageData);
-  };
+  // Handle profile picture file change (instant upload flow)
+  const handleProfileImageFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  // Handle profile picture upload (final)
-  const handleProfileImageUpload = async (imageData) => {
+    const file = files[0];
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      alert(`Error: ${validation.errors.join(", ")}`);
+      return;
+    }
+
+    // Check if it's an image
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file (JPG, PNG, GIF, WEBP)");
+      return;
+    }
+
+    // Check file size (max 5MB for profile images)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+
     setUpdatingProfile(true);
     try {
-      const result = await editUser({
-        photoURL: imageData.url,
-        profileImagePublicId: imageData.publicId,
-        updatedAt: new Date(),
-      });
+      const folder = "research-hub/profiles";
+      const result = await uploadFile(file, folder);
 
       if (result.success) {
-        console.log("Profile picture updated successfully");
-        setProfilePreview(null);
-        setIsEditingProfile(false);
+        const dbResult = await editUser({
+          photoURL: result.url,
+          profileImagePublicId: result.publicId,
+          updatedAt: new Date(),
+        });
+
+        if (dbResult.success) {
+          updateGlobalProfileImage(result.url); // Update global user state
+        } else {
+          alert("Failed to update profile picture: " + dbResult.error);
+        }
       } else {
-        alert("Failed to update profile picture: " + result.error);
+        alert("Upload failed: " + result.error);
       }
     } catch (error) {
-      console.error("Error updating profile picture:", error);
-      alert("Error updating profile picture: " + error.message);
+      console.error("Error uploading profile image:", error);
+      alert("Error uploading profile image: " + error.message);
     } finally {
       setUpdatingProfile(false);
+      // Reset input value to allow uploading the same file again if desired
+      e.target.value = "";
     }
   };
 
-  // Handle profile picture removal
-  const handleProfileImageRemove = async () => {
+  // Handle profile picture removal with confirmation
+  const handleProfileImageRemove = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!window.confirm("Are you sure you want to remove your profile picture?")) {
+      return;
+    }
+
     setUpdatingProfile(true);
     try {
       const result = await editUser({
@@ -134,9 +145,7 @@ export default function ProfileCard({
       });
 
       if (result.success) {
-        console.log("Profile picture removed successfully");
-        setProfilePreview(null);
-        setIsEditingProfile(false);
+        updateGlobalProfileImage(null); // Clear global user state
       } else {
         alert("Failed to remove profile picture: " + result.error);
       }
@@ -150,13 +159,11 @@ export default function ProfileCard({
 
   // Handle cover photo preview
   const handleCoverImagePreview = (imageData) => {
-    console.log("Cover image preview received:", imageData); // Debug log
     setCoverPreview(imageData);
   };
 
-  // Handle cover photo upload (final)
+  // Handle cover photo upload
   const handleCoverImageUpload = async (imageData) => {
-    console.log("Starting cover photo upload..."); // Debug log
     setUpdatingCover(true);
     try {
       const result = await editUser({
@@ -166,7 +173,6 @@ export default function ProfileCard({
       });
 
       if (result.success) {
-        console.log("Cover photo updated successfully");
         setCoverPreview(null);
         setIsEditingCover(false);
       } else {
@@ -182,7 +188,6 @@ export default function ProfileCard({
 
   // Handle cover photo removal
   const handleCoverImageRemove = async () => {
-    console.log("Removing cover photo..."); // Debug log
     setUpdatingCover(true);
     try {
       const result = await editUser({
@@ -192,7 +197,6 @@ export default function ProfileCard({
       });
 
       if (result.success) {
-        console.log("Cover photo removed successfully");
         setCoverPreview(null);
         setIsEditingCover(false);
       } else {
@@ -206,440 +210,247 @@ export default function ProfileCard({
     }
   };
 
-  // Cancel editing functions
-  const cancelProfileEdit = () => {
-    console.log("Canceling profile edit..."); // Debug log
-    setIsEditingProfile(false);
-    setProfilePreview(null);
-  };
-
   const cancelCoverEdit = () => {
-    console.log("Canceling cover edit..."); // Debug log
     setIsEditingCover(false);
     setCoverPreview(null);
   };
 
-  // Confirm upload functions
-  const confirmProfileUpload = () => {
-    console.log("Confirming profile upload..."); // Debug log
-    if (profilePreview) {
-      handleProfileImageUpload(profilePreview);
-    }
-  };
-
   const confirmCoverUpload = () => {
-    console.log("Confirming cover upload..."); // Debug log
     if (coverPreview) {
       handleCoverImageUpload(coverPreview);
     }
   };
 
   return (
-    <div className="w-full">
-      {/* Main Profile Card */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        {/* Cover Image Section */}
-        <div className="relative">
-          {/* Cover Photo Display */}
-          <div className="h-32 sm:h-40 md:h-48 lg:h-56 relative">
-            {coverPreview ? (
-              <img
-                src={coverPreview.url}
-                alt="Cover Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : currentUser?.coverPhotoURL ? (
-              <img
-                src={currentUser.coverPhotoURL}
-                alt="Cover"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700"></div>
-            )}
+    <section className="mb-6 relative rounded-3xl overflow-hidden glass-card">
+      {/* Cover Image Section */}
+      <div className="h-48 md:h-64 relative bg-gradient-to-r from-primary to-secondary">
+        {coverPreview ? (
+          <img
+            src={coverPreview.url}
+            alt="Cover Preview"
+            className="w-full h-full object-cover"
+          />
+        ) : currentUser?.coverPhotoURL ? (
+          <img
+            src={currentUser.coverPhotoURL}
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-primary to-secondary"></div>
+        )}
+        <div className="absolute inset-0 pattern-overlay"></div>
 
-            {/* Cover Photo Edit Button - Only for own profile */}
-            {isOwnProfile && !isEditingCover && (
+        {/* Cover Photo Edit overlay */}
+        {isOwnProfile && isEditingCover && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+            <div className="w-full h-full flex items-center justify-center">
+              <ProfileImageUpload
+                currentImage={currentUser?.coverPhotoURL}
+                onImageUpload={handleCoverImagePreview}
+                onImageRemove={handleCoverImageRemove}
+                type="cover"
+                className="w-full h-full"
+              />
+            </div>
+            {/* Cover Edit Action Buttons */}
+            <div className="absolute bottom-4 right-4 flex space-x-2 z-30">
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log("Cover edit button clicked"); // Debug log
-                  setIsEditingCover(true);
+                  cancelCoverEdit();
                 }}
-                className="absolute top-4 right-4 w-10 h-10 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full flex items-center justify-center transition-all duration-200 z-10"
-                title="Edit cover photo"
-                style={{ zIndex: 10 }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
               >
-                <Camera className="h-5 w-5" />
+                Cancel
               </button>
-            )}
-
-            {isOwnProfile && isEditingCover && (
-              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-20">
-                <div className="w-full h-full flex items-center justify-center">
-                  <ProfileImageUpload
-                    currentImage={currentUser?.coverPhotoURL}
-                    onImageUpload={handleCoverImagePreview}
-                    onImageRemove={handleCoverImageRemove}
-                    type="cover"
-                    className="w-full h-full"
-                  />
-                </div>
-
-                {/* Cover Edit Action Buttons */}
-                <div className="absolute bottom-4 right-4 flex space-x-2 z-30">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log("Cancel cover edit clicked"); // Debug log
-                      cancelCoverEdit();
-                    }}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  {coverPreview && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("Confirm cover upload clicked"); // Debug log
-                        confirmCoverUpload();
-                      }}
-                      disabled={updatingCover}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    >
-                      {updatingCover ? "Saving..." : "Save"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Optional: Add pattern overlay - but don't interfere with button clicks */}
-            {!isEditingCover && (
-              <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Content */}
-        <div className="relative px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
-          {/* Avatar Section - Overlapping the cover */}
-          <div className="flex flex-col items-center sm:items-start -mt-12 sm:-mt-16 md:-mt-20">
-            {/* Avatar */}
-            <div className="relative mb-4">
-              {/* Profile Picture Display */}
-              <div className="relative">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-white rounded-full border-4 border-white shadow-xl flex items-center justify-center relative overflow-hidden">
-                  {profilePreview ? (
-                    <img
-                      src={profilePreview.url}
-                      alt="Profile Preview"
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : currentUser?.photoURL ? (
-                    <img
-                      src={currentUser.photoURL}
-                      alt={currentUser.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-lg sm:text-xl md:text-2xl font-bold">
-                      {getInitials(currentUser?.name)}
-                    </div>
-                  )}
-
-                  {isOwnProfile && isEditingProfile && (
-                    <div className="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center">
-                      <ProfileImageUpload
-                        currentImage={currentUser?.photoURL}
-                        onImageUpload={handleProfileImagePreview}
-                        onImageRemove={handleProfileImageRemove}
-                        type="profile"
-                        className="w-full h-full"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Profile Picture Edit Button - Only for own profile */}
-                {isOwnProfile && !isEditingProfile && (
-                  <button
-                    onClick={() => setIsEditingProfile(true)}
-                    className="absolute bottom-1 right-1 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
-                    title="Edit profile picture"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </button>
-                )}
-
-                {/* Profile Edit Action Buttons */}
-                {isOwnProfile && isEditingProfile && (
-                  <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-white rounded-lg shadow-lg p-2 border">
-                    <button
-                      onClick={cancelProfileEdit}
-                      className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm font-medium transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    {profilePreview && (
-                      <button
-                        onClick={confirmProfileUpload}
-                        disabled={updatingProfile}
-                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium transition-colors disabled:opacity-50"
-                      >
-                        {updatingProfile ? "Saving..." : "Save"}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Online Status Indicator */}
-                <div className="absolute bottom-1 left-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-              </div>
-            </div>
-
-            {/* Action Buttons - Mobile centered, Desktop right aligned */}
-            <div className="w-full flex justify-center sm:justify-end mb-4">
-              {isOwnProfile ? (
-                <div className="flex space-x-2">
-                  {/* Edit Profile Button */}
-                  <button
-                    onClick={onEdit}
-                    className="flex items-center space-x-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-all duration-200 border border-gray-200 hover:border-gray-300"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="hidden sm:inline">Edit Profile</span>
-                    <span className="sm:hidden">Edit</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex space-x-2">
-                  {followButton}
-                  {/* Message button - only show if not own profile */}
-                  <button
-                    onClick={handleSendMessage}
-                    className="flex items-center space-x-2 px-4 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl font-medium text-sm transition-all duration-200 border border-blue-200 hover:border-blue-300"
-                    title="Send Message"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Message</span>
-                  </button>
-                  {/* More options */}
-                  <button className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 border border-gray-200 hover:border-gray-300">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                </div>
+              {coverPreview && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    confirmCoverUpload();
+                  }}
+                  disabled={updatingCover}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {updatingCover ? "Saving..." : "Save"}
+                </button>
               )}
             </div>
           </div>
+        )}
 
-          {/* Profile Info Section - Rest remains the same */}
-          <div className="space-y-2 sm:-mt-14 sm:space-y-6">
-            {/* Name and Headline */}
-            <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 leading-tight">
+        {/* Edit Cover Photo Icon Button (Owner only) */}
+        {isOwnProfile && !isEditingCover && (
+          <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsEditingCover(true);
+              }}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white p-2.5 rounded-full transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95"
+              title="Edit cover banner"
+            >
+              <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Details Header Panel */}
+      <div className="px-6 pb-6 pt-16 md:pt-20 flex flex-col md:flex-row md:items-end justify-between relative">
+        {/* Avatar Wrapper overlapping the cover banner */}
+        <div className="absolute -top-16 left-6 md:left-10 w-32 h-32 md:w-40 md:h-40 z-10">
+          {/* Hidden File Input for Avatar (Owner only) */}
+          {isOwnProfile && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfileImageFileChange}
+              className="hidden"
+            />
+          )}
+
+          {/* Main profile picture container */}
+          <div 
+            onClick={() => {
+              if (isOwnProfile && !updatingProfile) {
+                fileInputRef.current?.click();
+              }
+            }}
+            className={`w-full h-full rounded-full border-4 border-white bg-white shadow-xl overflow-hidden relative ${
+              isOwnProfile ? "cursor-pointer group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" : ""
+            }`}
+          >
+            {currentUser?.photoURL ? (
+              <img
+                src={currentUser.photoURL}
+                alt={currentUser.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl md:text-4xl font-bold">
+                {getInitials(currentUser?.name)}
+              </div>
+            )}
+
+            {/* Subtle Hover Cue overlay */}
+            {isOwnProfile && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center" />
+            )}
+
+            {/* Spinner Overlay during Profile Picture update */}
+            {updatingProfile && (
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center z-10">
+                <Loader2 className="w-6 h-6 md:w-8 md:h-8 text-white animate-spin" />
+                <span className="text-[9px] md:text-[10px] text-white mt-1 font-medium tracking-wide">Uploading</span>
+              </div>
+            )}
+          </div>
+
+          {/* Floating BADGE controls outside the overflow-hidden container to prevent clipping */}
+          {isOwnProfile && (
+            <>
+              {/* Camera FAB on Bottom-Right */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="absolute bottom-1 right-1 md:bottom-2 md:right-2 w-9 h-9 bg-primary hover:bg-primary-light text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-all cursor-pointer hover:scale-105 active:scale-95 z-20"
+                title="Change profile photo"
+                disabled={updatingProfile}
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+
+              {/* Red Trash FAB on Bottom-Left (Visible only if currentUser?.photoURL exists) */}
+              {currentUser?.photoURL && (
+                <button
+                  onClick={handleProfileImageRemove}
+                  className="absolute bottom-1 left-1 md:bottom-2 md:left-2 w-9 h-9 bg-white hover:bg-rose-50 text-rose-500 hover:text-rose-600 rounded-full flex items-center justify-center shadow-lg border-2 border-rose-100/30 transition-all cursor-pointer hover:scale-105 active:scale-95 z-20"
+                  title="Remove profile photo"
+                  disabled={updatingProfile}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* User Profile Info Info Column */}
+        <div className="flex-1 md:ml-48 mt-4 md:mt-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-display-lg text-headline-lg text-inverse-surface mb-1 font-bold leading-tight">
                 {currentUser?.name || "Anonymous User"}
               </h1>
+              
               {currentUser?.headline && (
-                <p className="text-base sm:text-lg text-gray-600 mb-3 font-medium">
+                <p className="text-body-md text-primary font-semibold mb-1">
                   {currentUser.headline}
                 </p>
               )}
 
-              {/* Quick Info Tags */}
-              <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-xs sm:text-sm text-gray-500">
+              {currentUser?.bio && (
+                <p className="text-body-sm text-text-muted max-w-xl mb-3 leading-relaxed">
+                  {currentUser.bio}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-text-muted font-body-sm text-body-sm">
+                <div className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[18px]">calendar_today</span>
+                  <span>Joined {formatDate(currentUser?.createdAt)}</span>
+                </div>
                 {currentUser?.location && (
-                  <div className="flex items-center space-x-1 bg-gray-50 px-3 py-1.5 rounded-full">
-                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[18px]">location_on</span>
                     <span>{currentUser.location}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-1 bg-gray-50 px-3 py-1.5 rounded-full">
-                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Joined {formatDate(currentUser?.createdAt)}</span>
-                </div>
+                {currentUser?.institution && (
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[18px]">domain</span>
+                    <span>{currentUser.institution}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Bio Section */}
-            {currentUser?.bio && (
-              <div className="text-center sm:text-left">
-                <p className="text-gray-700 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto sm:mx-0">
-                  {currentUser.bio}
-                </p>
-              </div>
-            )}
-
-            {/* Stats Section - Enhanced */}
-            <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="group cursor-pointer hover:bg-white rounded-lg p-2 sm:p-3 transition-all duration-200">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {currentUser?.followers?.length || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-500 font-medium">
-                    Followers
-                  </div>
-                </div>
-                <div className="group cursor-pointer hover:bg-white rounded-lg p-2 sm:p-3 transition-all duration-200">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {currentUser?.following?.length || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-500 font-medium">
-                    Following
-                  </div>
-                </div>
-                <div className="group cursor-pointer hover:bg-white rounded-lg p-2 sm:p-3 transition-all duration-200">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {currentUser?.postsCount || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-500 font-medium">
-                    Posts
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact & Additional Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Institution */}
-              {currentUser?.institution && (
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="flex-shrink-0">
-                    <Building2 className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 font-medium">
-                      Institution
-                    </div>
-                    <div className="text-sm text-gray-900 font-medium">
-                      {currentUser.institution}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Website */}
-              {currentUser?.website && (
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="flex-shrink-0">
-                    <Globe className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs text-gray-500 font-medium">
-                      Website
-                    </div>
-                    <a
-                      href={formatWebsiteUrl(currentUser.website)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium truncate block"
-                    >
-                      {getWebsiteDisplay(currentUser.website)}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Email - Only show for own profile */}
-              {isOwnProfile && currentUser?.email && (
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl sm:col-span-2">
-                  <div className="flex-shrink-0">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs text-gray-500 font-medium">
-                      Email
-                    </div>
-                    <div className="text-sm text-gray-900 font-medium truncate">
-                      {currentUser.email}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Research Interests */}
-            {currentUser?.interests && currentUser.interests.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 text-center sm:text-left">
-                  Research Interests
-                </h3>
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {currentUser.interests.map((interest, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* About Section */}
-            {currentUser?.about && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 text-center sm:text-left">
-                  About
-                </h3>
-                <div className="prose prose-sm max-w-none">
-                  <p className="text-gray-600 leading-relaxed whitespace-pre-line text-center sm:text-left">
-                    {currentUser.about}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Actions - Mobile Only */}
-            <div className="sm:hidden flex justify-center space-x-4 pt-4 border-t border-gray-100">
-              {!isOwnProfile && (
-                <>
-                  <button className="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium text-sm">
-                    <Users className="h-4 w-4" />
-                    <span>Connect</span>
-                  </button>
+            {/* Action Buttons */}
+            <div>
+              {isOwnProfile ? (
+                <button
+                  onClick={onEdit}
+                  className="px-6 py-2.5 border border-outline-variant text-inverse-surface font-label-md text-label-md rounded-full hover:bg-surface-container transition-all flex items-center gap-2 w-fit font-bold cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit_note</span>
+                  Edit Profile
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {followButton}
                   <button
                     onClick={handleSendMessage}
-                    className="flex-1 flex items-center justify-center space-x-2 py-3 bg-gray-50 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-100 transition-colors"
+                    className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-label-md text-label-md rounded-full hover:opacity-95 transition-all flex items-center gap-2 w-fit font-bold cursor-pointer shadow-md active:scale-95"
                   >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Message</span>
+                    <span className="material-symbols-outlined text-[18px]">chat_bubble</span>
+                    Message
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Image Upload Instructions - Show when editing */}
-      {isOwnProfile && (isEditingProfile || isEditingCover) && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="text-sm font-semibold text-blue-900 mb-2">
-            📸 Photo Upload Tips
-          </h4>
-          <ul className="text-xs text-blue-800 space-y-1">
-            <li>
-              • <strong>Profile Picture:</strong> Square images work best (1:1
-              ratio)
-            </li>
-            <li>
-              • <strong>Cover Photo:</strong> Wide images recommended (16:9
-              ratio)
-            </li>
-            <li>• Maximum file size: 5MB per image</li>
-            <li>• Supported formats: JPG, PNG, GIF, WEBP</li>
-            <li>• Images are automatically optimized for web</li>
-            <li>• Click "Save" to confirm your selection</li>
-          </ul>
-        </div>
-      )}
-    </div>
+    </section>
   );
 }

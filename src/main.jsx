@@ -6,11 +6,15 @@ import { router } from "./Routes/index.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { UserProvider } from "./context/UserContext.jsx";
+
 // import App from './App.jsx'
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <UserProvider>
+      <RouterProvider router={router} />
+    </UserProvider>
     <ToastContainer />
   </StrictMode>
 );
