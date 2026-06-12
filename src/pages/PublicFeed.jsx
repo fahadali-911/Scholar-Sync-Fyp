@@ -12,9 +12,13 @@ import {
   UserPlus,
   LogIn,
   Loader2,
+  FileText,
+  Award,
+  Hash,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ScholarSyncLogo from "../components/ScholarSyncLogo";
+import PublicNavbar from "../common/PublicNavbar";
 
 const PublicFeed = () => {
   const [activeFilter, setActiveFilter] = useState("all");
@@ -243,9 +247,8 @@ const PublicFeed = () => {
         {profileImageURL ? (
           <>
             <img
-              key={`profile-${userId}-${profileImageURL}-${
-                currentProfile.updatedAt || Date.now()
-              }`}
+              key={`profile-${userId}-${profileImageURL}-${currentProfile.updatedAt || Date.now()
+                }`}
               src={profileImageURL}
               alt={displayName}
               className="w-full h-full rounded-full object-cover"
@@ -327,13 +330,13 @@ const PublicFeed = () => {
   const getPostTypeStyle = (type) => {
     switch (type) {
       case "research-paper":
-        return "bg-blue-50 text-blue-600 border-blue-200";
+        return "bg-blue-50/70 text-blue-600 border-blue-100/80";
       case "discussion":
-        return "bg-red-50 text-red-600 border-red-200";
+        return "bg-red-50/80 text-red-600 border-red-100";
       case "project":
-        return "bg-yellow-50 text-yellow-600 border-yellow-200";
+        return "bg-amber-50/70 text-amber-600 border-amber-100/80";
       default:
-        return "bg-gray-50 text-gray-600 border-gray-200";
+        return "bg-slate-50/70 text-slate-600 border-slate-100/80";
     }
   };
 
@@ -362,36 +365,9 @@ const PublicFeed = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/20">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md border-b border-slate-100/60 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3.5">
-            {/* Logo */}
-            <div className="cursor-pointer flex items-center transition-opacity hover:opacity-95" onClick={() => navigate("/home")}>
-              <ScholarSyncLogo theme="light" className="h-10 sm:h-11 w-auto" width="auto" height="100%" />
-            </div>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/login")}
-                className="flex items-center space-x-2 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-primary hover:bg-slate-50/80 rounded-full transition-all duration-200"
-              >
-                <LogIn className="w-4 h-4 text-slate-500" />
-                <span>Log In</span>
-              </button>
-              <button
-                onClick={() => navigate("/register")}
-                className="flex items-center space-x-2 px-6 py-2.5 bg-primary hover:bg-primary-light text-white text-sm font-semibold rounded-full shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Sign Up</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-slate-50/50 via-white to-slate-50/30 py-20 sm:py-24 border-b border-slate-100/60">
@@ -427,56 +403,58 @@ const PublicFeed = () => {
       {/* Stats Section */}
 
       {/* Main Feed */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 p-5 sm:p-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="space-y-6">
           {/* Feed Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 pb-6 border-b border-slate-100/80">
-            <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
-                Latest Research & Discussions
-              </h3>
-              <p className="text-slate-500 text-sm font-medium">
-                Explore what the academic community is sharing
-              </p>
-            </div>
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)]">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+                  Latest Research & Discussions
+                </h3>
+                <p className="text-slate-500 text-sm font-medium">
+                  Explore what the academic community is sharing
+                </p>
+              </div>
 
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
-              {[
-                { key: "all", label: "All" },
-                { key: "papers", label: "Papers" },
-                { key: "discussions", label: "Discussions" },
-                { key: "projects", label: "Projects" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => handleFilterChange(tab.key)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                    activeFilter === tab.key
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-slate-500 hover:text-primary hover:bg-white/50"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {/* Filter Tabs */}
+              <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
+                {[
+                  { key: "all", label: "All" },
+                  { key: "papers", label: "Papers" },
+                  { key: "discussions", label: "Discussions" },
+                  { key: "projects", label: "Projects" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleFilterChange(tab.key)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                      activeFilter === tab.key
+                        ? "bg-[#0B192C] text-white shadow-sm"
+                        : "bg-transparent text-slate-500 border border-slate-200 hover:text-[#0B192C] hover:border-slate-300 hover:bg-slate-100/50"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Posts */}
           <div className="space-y-6">
             {filteredPosts.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)]">
                 <div className="text-4xl mb-4">🔬</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-lg font-medium text-slate-900 mb-2">
                   No posts yet
                 </h3>
-                <p className="text-slate-500 mb-4">
-                  Be the first to share your research!
+                <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                  Be the first to share your research with the community!
                 </p>
                 <button
                   onClick={() => navigate("/register")}
-                  className="px-6 py-2.5 bg-primary hover:bg-primary-light text-white rounded-full font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer text-sm"
+                  className="px-6 py-2.5 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-full font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer text-sm"
                 >
                   Join Now
                 </button>
@@ -487,12 +465,12 @@ const PublicFeed = () => {
                 const displayName = getUserDisplayName(post);
 
                 return (
-                  <div
+                  <article
                     key={`post-${post.id}-${currentProfile.updatedAt || index}`}
-                    className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-300"
+                    className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                   >
                     {/* Post Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center space-x-4">
                         <UserAvatar
                           post={post}
@@ -502,11 +480,11 @@ const PublicFeed = () => {
                         <div>
                           <button
                             onClick={() => handleAuthRequired("profile")}
-                            className="font-semibold cursor-pointer hover:text-blue-500 text-gray-900 transition-colors"
+                            className="font-semibold cursor-pointer hover:text-[#00A6FB] text-slate-900 transition-colors text-left"
                           >
                             {displayName}
                           </button>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs text-slate-400">
                             {post.timeStamp
                               ? new Date(
                                   post.timeStamp.seconds * 1000
@@ -516,7 +494,7 @@ const PublicFeed = () => {
                         </div>
                       </div>
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium border ${getPostTypeStyle(
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPostTypeStyle(
                           post.postType || post.type
                         )}`}
                       >
@@ -525,52 +503,50 @@ const PublicFeed = () => {
                     </div>
 
                     {/* Post Content */}
-                    <div className="mb-4">
-                      <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                    <div className="mb-5">
+                      <h4 className="text-xl font-semibold text-slate-900 mb-2.5 leading-snug">
                         {post.title || post.status}
                       </h4>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
                         {post.description || post.excerpt || post.status}
                       </p>
                     </div>
 
                     {/* Tags */}
                     {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
+                      <div className="flex flex-wrap gap-2 mb-5">
                         {post.tags.map((tag, tagIndex) => (
                           <span
                             key={tagIndex}
-                            className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium"
+                            className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 rounded-full text-xs font-medium hover:border-[#00A6FB] hover:text-[#00A6FB] transition-colors cursor-pointer"
                           >
-                            {tag}
+                            #{tag}
                           </span>
                         ))}
                       </div>
                     )}
 
-                    {/* File Preview */}
+                    {/* File Preview (Attachment Component) */}
                     {post.fileURL && (
-                      <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <span className="text-xl">
-                              {post.fileType === "pdf" ? "📄" : "📎"}
-                            </span>
+                      <div className="mb-5 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
+                            <FileText className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">
+                            <p className="font-semibold text-slate-800 text-sm truncate">
                               {post.fileName || "Attached file"}
                             </p>
-                            <p className="text-sm text-gray-500 truncate">
+                            <p className="text-xs text-slate-400 truncate mt-0.5">
                               {post.fileType
                                 ? post.fileType.toUpperCase()
                                 : "File"}{" "}
-                              • Sign up to download
+                              • Public document
                             </p>
                           </div>
                           <button
                             onClick={() => handleAuthRequired("download")}
-                            className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors flex-shrink-0"
+                            className="px-4 py-1.5 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-lg text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 flex-shrink-0 cursor-pointer"
                           >
                             View
                           </button>
@@ -579,18 +555,18 @@ const PublicFeed = () => {
                     )}
 
                     {/* Post Actions */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-4 border-t border-gray-50 gap-4">
-                      <div className="flex space-x-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-4 border-t border-slate-100 gap-4">
+                      <div className="flex space-x-2">
                         <button
                           onClick={() => handleAuthRequired("like")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-rose-600 hover:bg-rose-50/50 transition-all duration-200 cursor-pointer"
                         >
                           <Heart className="w-4 h-4" />
                           <span>Like ({post.likes || 0})</span>
                         </button>
                         <button
                           onClick={() => handleAuthRequired("comment")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-[#00A6FB] hover:bg-sky-50/50 transition-all duration-200 cursor-pointer"
                         >
                           <MessageCircle className="w-4 h-4" />
                           <span>Comment ({post.comments || 0})</span>
@@ -602,7 +578,7 @@ const PublicFeed = () => {
                         post.fileURL && (
                           <button
                             onClick={() => handleAuthRequired("download")}
-                            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary-light transition-all duration-200 cursor-pointer"
+                            className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#0B192C] hover:bg-[#14263f] text-white hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
                           >
                             <Download className="w-4 h-4" />
                             <span>Download PDF</span>
@@ -611,20 +587,20 @@ const PublicFeed = () => {
 
                       {(post.postType === "project" ||
                         post.type === "project") && (
-                        <button
-                          onClick={() => handleAuthRequired("profile")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View Project</span>
-                        </button>
-                      )}
+                          <button
+                            onClick={() => handleAuthRequired("profile")}
+                            className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#00A6FB] hover:bg-[#0086cc] text-white hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>View Project</span>
+                          </button>
+                        )}
                     </div>
 
                     {/* Show likes info without links for public users */}
                     {post.likedBy && post.likedBy.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-50">
-                        <p className="text-sm text-gray-500">
+                      <div className="mt-3.5 pt-3 border-t border-slate-50">
+                        <p className="text-xs text-slate-400 font-medium">
                           {post.likedBy.length === 1
                             ? `Liked by ${
                                 post.likedBy[0].name ||
@@ -649,13 +625,13 @@ const PublicFeed = () => {
                         </p>
                       </div>
                     )}
-                  </div>
+                  </article>
                 );
               })
             )}
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Call to Action */}
       <div className="bg-gradient-to-br from-primary to-primary-dark py-20 border-t border-slate-900/40 relative overflow-hidden">

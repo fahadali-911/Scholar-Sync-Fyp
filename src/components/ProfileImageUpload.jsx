@@ -210,7 +210,7 @@ const ProfileImageUpload = ({
       {isCover && (
         <div className="relative group w-full h-full">
           <div
-            className={`w-full h-full overflow-hidden bg-transparent flex items-center justify-center cursor-pointer transition-all duration-200 ${
+            className={`w-full h-full overflow-hidden bg-transparent flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-black/10 ${
               dragActive ? "bg-blue-500 bg-opacity-20" : ""
             }`}
             onDragEnter={handleDrag}
@@ -225,11 +225,11 @@ const ProfileImageUpload = ({
             }}
           >
             {uploading ? (
-              <div className="text-white text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+              <div className="text-white flex flex-col items-center justify-center text-center">
+                <Loader2 className="h-8 w-8 animate-spin mb-2" />
                 <div className="text-sm font-medium">Uploading...</div>
-                <div className="text-xs">{uploadProgress}%</div>
-                <div className="w-32 h-2 bg-white bg-opacity-30 rounded-full mt-2">
+                <div className="text-xs mt-0.5">{uploadProgress}%</div>
+                <div className="w-32 h-1.5 bg-white bg-opacity-30 rounded-full mt-2 overflow-hidden">
                   <div
                     className="h-full bg-white rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
@@ -237,34 +237,33 @@ const ProfileImageUpload = ({
                 </div>
               </div>
             ) : (
-              <div className="text-white text-center">
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="text-center">
-                    <Camera className="h-8 w-8 mx-auto mb-2" />
-                    <div className="text-sm font-medium">
-                      {currentImage ? "Change Cover" : "Add Cover Photo"}
-                    </div>
-                    <div className="text-xs opacity-75">
-                      Click or drag to upload
-                    </div>
+              <div className="text-white flex flex-col items-center justify-center space-y-3">
+                <div className="flex flex-col items-center text-center">
+                  <Camera className="h-8 w-8 mb-2" />
+                  <div className="text-sm font-medium">
+                    {currentImage ? "Change Cover" : "Add Cover Photo"}
                   </div>
-
-                  {/* Remove button for cover photo */}
-                  {currentImage && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("Remove cover button clicked"); // Debug log
-                        handleImageRemove();
-                      }}
-                      className="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200"
-                      title="Remove current cover"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  )}
+                  <div className="text-xs opacity-75 mt-1">
+                    Click or drag to upload
+                  </div>
                 </div>
+
+                {/* Remove button for cover photo */}
+                {currentImage && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("Remove cover button clicked"); // Debug log
+                      handleImageRemove();
+                    }}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 shadow-sm active:scale-95 cursor-pointer z-30"
+                    title="Remove current cover"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Remove Cover</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -289,12 +288,12 @@ const ProfileImageUpload = ({
       {/* Upload instructions - Only show when no current image and not uploading */}
       {!currentImage && !uploading && !previewUrl && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
+          {isProfile && (
+            <p className="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded mb-1">
+              Click to upload profile picture
+            </p>
+          )}
           <p className="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
-            {isProfile
-              ? "Click to upload profile picture"
-              : "Click to upload cover photo"}
-          </p>
-          <p className="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded mt-1">
             Max 5MB • JPG, PNG, GIF, WEBP
           </p>
         </div>

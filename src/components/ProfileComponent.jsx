@@ -16,25 +16,20 @@ export default function ProfileComponent({
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Inline editing states for contact info
-  const [isEditing, setIsEditing] = useState(false);
+  // States for targeted contact info editing
+  const [activeEditField, setActiveEditField] = useState(null); // 'github' | 'linkedin' | 'orcid' | null
+  const [editingStyle, setEditingStyle] = useState("inline"); // 'inline' | 'modal'
+  const [tempInputVal, setTempInputVal] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editInput, setEditInput] = useState({
-    github: "",
-    linkedin: "",
-    orcid: "",
-  });
 
-  // Load user data into edit state
+  // Sync temp input value when active edit field changes
   useEffect(() => {
-    if (userData) {
-      setEditInput({
-        github: userData.github || "",
-        linkedin: userData.linkedin || "",
-        orcid: userData.orcid || "",
-      });
+    if (activeEditField && userData) {
+      setTempInputVal(userData[activeEditField] || "");
+    } else {
+      setTempInputVal("");
     }
-  }, [userData]);
+  }, [activeEditField, userData]);
 
   function onEdit() {
     setShowEditPopup(true);
@@ -82,14 +77,12 @@ export default function ProfileComponent({
       .replace(/\/$/, "");
   };
 
-  // Asynchronous API integration saving handler
-  const handleSaveContactInfo = async (e) => {
-    e.preventDefault();
-
+  // Targeted save handler for individual contact field
+  const handleSaveField = async (field, value) => {
     // Validate ORCID format (16-digit hyphenated structure)
-    if (editInput.orcid.trim()) {
+    if (field === "orcid" && value.trim()) {
       const orcidRegex = /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/;
-      if (!orcidRegex.test(editInput.orcid.trim())) {
+      if (!orcidRegex.test(value.trim())) {
         toast.error("Invalid ORCID format. Must match xxxx-xxxx-xxxx-xxxx");
         return;
       }
@@ -98,10 +91,9 @@ export default function ProfileComponent({
     setLoading(true);
 
     try {
+      const updatedValue = value.trim();
       const contactData = {
-        github: editInput.github.trim(),
-        linkedin: editInput.linkedin.trim(),
-        orcid: editInput.orcid.trim(),
+        [field]: updatedValue,
         updatedAt: new Date(),
       };
 
@@ -130,10 +122,13 @@ export default function ProfileComponent({
       }
 
       if (dbResult.success || apiSuccess) {
-        toast.success("Contact information updated successfully!");
-        setIsEditing(false);
+        toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
+        setActiveEditField(null);
+        if (userData) {
+          userData[field] = updatedValue;
+        }
       } else {
-        toast.error("Failed to update contact info: " + (dbResult.error || "Unknown error"));
+        toast.error("Failed to update: " + (dbResult.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error saving contact info:", error);
@@ -192,251 +187,341 @@ export default function ProfileComponent({
           <div className="lg:col-span-1 flex flex-col gap-6">
             
             {/* Contact Information Card */}
-            <div className="glass-card p-6 rounded-2xl">
-              <div className="flex items-center justify-between mb-4">
+            {/* Contact Information Card */}
+            <div className="glass-card p-6 rounded-2xl relative">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100/60">
                 <h4 className="font-label-md text-label-md text-text-muted uppercase tracking-wider font-bold">
                   Contact Information
                 </h4>
                 {isOwnProfile && (
-                  <button
-                    onClick={() => {
-                      if (isEditing) {
-                        setEditInput({
-                          github: userData?.github || "",
-                          linkedin: userData?.linkedin || "",
-                          orcid: userData?.orcid || "",
-                        });
-                      }
-                      setIsEditing(!isEditing);
-                    }}
-                    className="text-xs text-secondary hover:text-secondary-dark font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">{isEditing ? "close" : "edit"}</span>
-                    {isEditing ? "Cancel" : "Edit"}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-semibold text-slate-400">Style:</span>
+                    <div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200/60">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveEditField(null);
+                          setEditingStyle("inline");
+                        }}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          editingStyle === "inline"
+                            ? "bg-white text-slate-800 shadow-xs border border-slate-200/40"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        Inline
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveEditField(null);
+                          setEditingStyle("modal");
+                        }}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                          editingStyle === "modal"
+                            ? "bg-white text-slate-800 shadow-xs border border-slate-200/40"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        Modal
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {isEditing ? (
-                <form onSubmit={handleSaveContactInfo} className="space-y-4">
-                  {/* Email (Always read-only) */}
-                  {userData?.email && (
-                    <div className="flex items-center gap-3 opacity-60">
-                      <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[20px]">mail</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Email (Read Only)</p>
-                        <p className="text-body-sm text-on-surface truncate font-medium">{userData.email}</p>
-                      </div>
+              <div className="space-y-4">
+                {/* Email (Always Read-only) */}
+                {userData?.email && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined text-[20px]">mail</span>
                     </div>
-                  )}
-
-                  {/* GitHub Input */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1.5">
-                      GitHub Handle / URL
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <span className="material-symbols-outlined text-[18px]">code</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={editInput.github}
-                        onChange={(e) => setEditInput({ ...editInput, github: e.target.value })}
-                        placeholder="github.com/username or username"
-                        className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all text-body-sm bg-slate-50 focus:bg-white text-on-surface"
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  {/* LinkedIn Input */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1.5">
-                      LinkedIn Handle / URL
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <span className="material-symbols-outlined text-[18px]">person</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={editInput.linkedin}
-                        onChange={(e) => setEditInput({ ...editInput, linkedin: e.target.value })}
-                        placeholder="linkedin.com/in/username or username"
-                        className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all text-body-sm bg-slate-50 focus:bg-white text-on-surface"
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  {/* ORCID Input */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1.5">
-                      ORCID iD
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <span className="material-symbols-outlined text-[18px]">id_card</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={editInput.orcid}
-                        onChange={(e) => setEditInput({ ...editInput, orcid: e.target.value })}
-                        placeholder="orcid.org/0000-0000-0000-0000 or 16 digits"
-                        className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all text-body-sm bg-slate-50 focus:bg-white text-on-surface"
-                        disabled={loading}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-1">Format: xxxx-xxxx-xxxx-xxxx (e.g. 0000-0002-1825-0097)</p>
-                  </div>
-
-                  {/* Form Action Buttons */}
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditInput({
-                          github: userData?.github || "",
-                          linkedin: userData?.linkedin || "",
-                          orcid: userData?.orcid || "",
-                        });
-                      }}
-                      className="px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer"
-                      disabled={loading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-primary hover:bg-primary-light text-white rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="space-y-4">
-                  {/* Email */}
-                  {userData?.email && (
-                    <a
-                      href={`mailto:${userData.email}`}
-                      className="flex items-center gap-3 group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-200">
-                        <span className="material-symbols-outlined text-[20px]">mail</span>
-                      </div>
-                      <span className="text-body-sm font-body-sm text-on-surface truncate group-hover:text-primary transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Email (Read Only)</p>
+                      <a
+                        href={`mailto:${userData.email}`}
+                        className="text-body-sm text-on-surface truncate font-medium hover:text-primary transition-colors block"
+                      >
                         {userData.email}
-                      </span>
-                    </a>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* GitHub Field */}
+                <div className="group flex items-center justify-between min-h-[40px]">
+                  {activeEditField === "github" && editingStyle === "inline" ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSaveField("github", tempInputVal);
+                      }}
+                      className="flex items-center gap-2 w-full animate-in fade-in duration-200"
+                    >
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                          <span className="material-symbols-outlined text-[18px]">code</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={tempInputVal}
+                          onChange={(e) => setTempInputVal(e.target.value)}
+                          placeholder="github.com/username"
+                          className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none bg-slate-50 focus:bg-white text-on-surface transition-all focus:ring-1 focus:ring-secondary focus:border-secondary"
+                          disabled={loading}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
+                          title="Save"
+                        >
+                          <span className="material-symbols-outlined text-[16px] font-bold">check</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveEditField(null)}
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                          title="Cancel"
+                        >
+                          <span className="material-symbols-outlined text-[16px] font-bold">close</span>
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <a
+                        href={userData?.github ? formatLinkUrl(userData.github, "github") : undefined}
+                        onClick={(e) => {
+                          if (!userData?.github) {
+                            e.preventDefault();
+                            if (isOwnProfile) setActiveEditField("github");
+                          }
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center gap-3 group/link ${
+                          !userData?.github && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover/link:bg-primary group-hover/link:text-white transition-all duration-200">
+                          <span className="material-symbols-outlined text-[20px]">code</span>
+                        </div>
+                        <span className={`text-body-sm font-body-sm transition-colors ${
+                          userData?.github
+                            ? "text-on-surface group-hover/link:text-primary font-medium"
+                            : "text-text-muted italic group-hover/link:text-primary"
+                        }`}>
+                          {userData?.github
+                            ? getLinkDisplay(userData.github, "github", "github.com")
+                            : isOwnProfile
+                            ? "Add GitHub profile"
+                            : "Not linked yet"}
+                        </span>
+                      </a>
+                      {isOwnProfile && userData?.github && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveEditField("github");
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-secondary hover:text-secondary-dark font-bold transition-all duration-200 cursor-pointer flex items-center gap-0.5 ml-2 font-display-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
                   )}
-
-                  {/* GitHub link */}
-                  <a
-                    href={userData?.github ? formatLinkUrl(userData.github, "github") : undefined}
-                    onClick={(e) => {
-                      if (!userData?.github) {
-                        e.preventDefault();
-                        if (isOwnProfile) setIsEditing(true);
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-3 group ${
-                      !userData?.github && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-white transition-all duration-200">
-                      <span className="material-symbols-outlined text-[20px]">code</span>
-                    </div>
-                    <span className={`text-body-sm font-body-sm transition-colors ${
-                      userData?.github
-                        ? "text-on-surface group-hover:text-primary font-medium"
-                        : "text-text-muted italic group-hover:text-primary"
-                    }`}>
-                      {userData?.github
-                        ? getLinkDisplay(userData.github, "github", "github.com")
-                        : isOwnProfile
-                        ? "Add GitHub profile"
-                        : "Not linked yet"}
-                    </span>
-                  </a>
-
-                  {/* LinkedIn link */}
-                  <a
-                    href={userData?.linkedin ? formatLinkUrl(userData.linkedin, "linkedin") : undefined}
-                    onClick={(e) => {
-                      if (!userData?.linkedin) {
-                        e.preventDefault();
-                        if (isOwnProfile) setIsEditing(true);
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-3 group ${
-                      !userData?.linkedin && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-white transition-all duration-200">
-                      <span className="material-symbols-outlined text-[20px]">person</span>
-                    </div>
-                    <span className={`text-body-sm font-body-sm transition-colors ${
-                      userData?.linkedin
-                        ? "text-on-surface group-hover:text-primary font-medium"
-                        : "text-text-muted italic group-hover:text-primary"
-                    }`}>
-                      {userData?.linkedin
-                        ? getLinkDisplay(userData.linkedin, "linkedin", "linkedin.com")
-                        : isOwnProfile
-                        ? "Add LinkedIn profile"
-                        : "Not linked yet"}
-                    </span>
-                  </a>
-
-                  {/* ORCID link */}
-                  <a
-                    href={userData?.orcid ? formatLinkUrl(userData.orcid, "orcid") : undefined}
-                    onClick={(e) => {
-                      if (!userData?.orcid) {
-                        e.preventDefault();
-                        if (isOwnProfile) setIsEditing(true);
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-3 group ${
-                      !userData?.orcid && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-white transition-all duration-200">
-                      <span className="material-symbols-outlined text-[20px]">id_card</span>
-                    </div>
-                    <span className={`text-body-sm font-body-sm transition-colors ${
-                      userData?.orcid
-                        ? "text-on-surface group-hover:text-primary font-medium"
-                        : "text-text-muted italic group-hover:text-primary"
-                    }`}>
-                      {userData?.orcid
-                        ? getLinkDisplay(userData.orcid, "orcid", "orcid.org")
-                        : isOwnProfile
-                        ? "Add ORCID iD"
-                        : "Not linked yet"}
-                    </span>
-                  </a>
                 </div>
-              )}
+
+                {/* LinkedIn Field */}
+                <div className="group flex items-center justify-between min-h-[40px]">
+                  {activeEditField === "linkedin" && editingStyle === "inline" ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSaveField("linkedin", tempInputVal);
+                      }}
+                      className="flex items-center gap-2 w-full animate-in fade-in duration-200"
+                    >
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                          <span className="material-symbols-outlined text-[18px]">person</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={tempInputVal}
+                          onChange={(e) => setTempInputVal(e.target.value)}
+                          placeholder="linkedin.com/in/username"
+                          className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none bg-slate-50 focus:bg-white text-on-surface transition-all focus:ring-1 focus:ring-secondary focus:border-secondary"
+                          disabled={loading}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
+                          title="Save"
+                        >
+                          <span className="material-symbols-outlined text-[16px] font-bold">check</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveEditField(null)}
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                          title="Cancel"
+                        >
+                          <span className="material-symbols-outlined text-[16px] font-bold">close</span>
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <a
+                        href={userData?.linkedin ? formatLinkUrl(userData.linkedin, "linkedin") : undefined}
+                        onClick={(e) => {
+                          if (!userData?.linkedin) {
+                            e.preventDefault();
+                            if (isOwnProfile) setActiveEditField("linkedin");
+                          }
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center gap-3 group/link ${
+                          !userData?.linkedin && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover/link:bg-primary group-hover/link:text-white transition-all duration-200">
+                          <span className="material-symbols-outlined text-[20px]">person</span>
+                        </div>
+                        <span className={`text-body-sm font-body-sm transition-colors ${
+                          userData?.linkedin
+                            ? "text-on-surface group-hover/link:text-primary font-medium"
+                            : "text-text-muted italic group-hover/link:text-primary"
+                        }`}>
+                          {userData?.linkedin
+                            ? getLinkDisplay(userData.linkedin, "linkedin", "linkedin.com")
+                            : isOwnProfile
+                            ? "Add LinkedIn profile"
+                            : "Not linked yet"}
+                        </span>
+                      </a>
+                      {isOwnProfile && userData?.linkedin && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveEditField("linkedin");
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-secondary hover:text-secondary-dark font-bold transition-all duration-200 cursor-pointer flex items-center gap-0.5 ml-2 font-display-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* ORCID iD Field */}
+                <div className="group flex items-center justify-between min-h-[40px]">
+                  {activeEditField === "orcid" && editingStyle === "inline" ? (
+                    <div className="w-full">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSaveField("orcid", tempInputVal);
+                        }}
+                        className="flex items-center gap-2 w-full animate-in fade-in duration-200"
+                      >
+                        <div className="relative flex-1">
+                          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                            <span className="material-symbols-outlined text-[18px]">id_card</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={tempInputVal}
+                            onChange={(e) => setTempInputVal(e.target.value)}
+                            placeholder="orcid.org/0000-0000-0000-0000"
+                            className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none bg-slate-50 focus:bg-white text-on-surface transition-all focus:ring-1 focus:ring-secondary focus:border-secondary"
+                            disabled={loading}
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            type="submit"
+                            disabled={loading}
+                            className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-50"
+                            title="Save"
+                          >
+                            <span className="material-symbols-outlined text-[16px] font-bold">check</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveEditField(null)}
+                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                            title="Cancel"
+                          >
+                            <span className="material-symbols-outlined text-[16px] font-bold">close</span>
+                          </button>
+                        </div>
+                      </form>
+                      <p className="text-[9px] text-slate-400 mt-1 pl-8">Format: xxxx-xxxx-xxxx-xxxx (e.g. 0000-0002-1825-0097)</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <a
+                        href={userData?.orcid ? formatLinkUrl(userData.orcid, "orcid") : undefined}
+                        onClick={(e) => {
+                          if (!userData?.orcid) {
+                            e.preventDefault();
+                            if (isOwnProfile) setActiveEditField("orcid");
+                          }
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center gap-3 group/link ${
+                          !userData?.orcid && !isOwnProfile ? "opacity-60 pointer-events-none" : "cursor-pointer"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant group-hover/link:bg-primary group-hover/link:text-white transition-all duration-200">
+                          <span className="material-symbols-outlined text-[20px]">id_card</span>
+                        </div>
+                        <span className={`text-body-sm font-body-sm transition-colors ${
+                          userData?.orcid
+                            ? "text-on-surface group-hover/link:text-primary font-medium"
+                            : "text-text-muted italic group-hover/link:text-primary"
+                        }`}>
+                          {userData?.orcid
+                            ? getLinkDisplay(userData.orcid, "orcid", "orcid.org")
+                            : isOwnProfile
+                            ? "Add ORCID iD"
+                            : "Not linked yet"}
+                        </span>
+                      </a>
+                      {isOwnProfile && userData?.orcid && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveEditField("orcid");
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-secondary hover:text-secondary-dark font-bold transition-all duration-200 cursor-pointer flex items-center gap-0.5 ml-2 font-display-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Research Interests Card */}
@@ -485,6 +570,118 @@ export default function ProfileComponent({
       {/* Edit Profile Overlay Modal */}
       {showEditPopup && (
         <EditProfile setShowEditPopup={setShowEditPopup} />
+      )}
+
+      {/* Targeted Contextual Modal (Approach B) */}
+      {activeEditField && editingStyle === "modal" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col border border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[22px]">
+                  {activeEditField === "github"
+                    ? "code"
+                    : activeEditField === "linkedin"
+                    ? "person"
+                    : "id_card"}
+                </span>
+                Edit {activeEditField === "github"
+                  ? "GitHub Profile"
+                  : activeEditField === "linkedin"
+                  ? "LinkedIn Profile"
+                  : "ORCID iD"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveEditField(null)}
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveField(activeEditField, tempInputVal);
+              }}
+            >
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    {activeEditField === "github"
+                      ? "GitHub Username or URL"
+                      : activeEditField === "linkedin"
+                      ? "LinkedIn Username or URL"
+                      : "ORCID iD (xxxx-xxxx-xxxx-xxxx)"}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <span className="material-symbols-outlined text-[20px]">
+                        {activeEditField === "github"
+                          ? "code"
+                          : activeEditField === "linkedin"
+                          ? "person"
+                          : "id_card"}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={tempInputVal}
+                      onChange={(e) => setTempInputVal(e.target.value)}
+                      placeholder={
+                        activeEditField === "github"
+                          ? "github.com/username"
+                          : activeEditField === "linkedin"
+                          ? "linkedin.com/in/username"
+                          : "orcid.org/0000-0000-0000-0000"
+                      }
+                      className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none bg-slate-50 focus:bg-white text-slate-800 transition-all focus:ring-2 focus:ring-secondary/20 focus:border-secondary font-medium"
+                      disabled={loading}
+                      autoFocus
+                    />
+                  </div>
+                  {activeEditField === "orcid" && (
+                    <p className="text-[11px] text-slate-400 mt-2 font-medium">
+                      Format: xxxx-xxxx-xxxx-xxxx (e.g. 0000-0002-1825-0097)
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveEditField(null)}
+                  disabled={loading}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-semibold transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

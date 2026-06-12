@@ -509,7 +509,7 @@ const Homefeed = ({ currUser }) => {
   return (
     <div className="min-h-screen bg-slate-50/30">
       {/* Main Container */}
-      <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="w-full py-0">
         <div>
           {/* Main Feed */}
           {isOpen && (
@@ -544,7 +544,7 @@ const Homefeed = ({ currUser }) => {
             post={summarizerModal.post}
           />
 
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="bg-white w-full rounded-none shadow-sm border-y border-slate-100 p-4 sm:p-6 sm:px-8 lg:px-12 mb-6">
             {/* Feed Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-primary tracking-tight">

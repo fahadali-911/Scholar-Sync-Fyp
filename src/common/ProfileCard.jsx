@@ -221,31 +221,38 @@ export default function ProfileCard({
     }
   };
 
+  // Cover photo fit mode: 'cover' | 'contain'
+  const [coverFitMode, setCoverFitMode] = useState("cover");
+
   return (
-    <section className="mb-6 relative rounded-3xl overflow-hidden glass-card">
+    <section className="mb-6 relative rounded-3xl overflow-hidden glass-card flex flex-col">
       {/* Cover Image Section */}
-      <div className="h-48 md:h-64 relative bg-gradient-to-r from-primary to-secondary">
+      <div className="w-full aspect-[3/1] min-h-[192px] sm:min-h-[256px] relative bg-slate-950 flex items-center justify-center">
         {coverPreview ? (
           <img
             src={coverPreview.url}
             alt="Cover Preview"
-            className="w-full h-full object-cover"
+            className={`w-full h-full ${
+              coverFitMode === "contain" ? "object-contain" : "object-cover object-center"
+            }`}
           />
         ) : currentUser?.coverPhotoURL ? (
           <img
             src={currentUser.coverPhotoURL}
             alt="Cover"
-            className="w-full h-full object-cover"
+            className={`w-full h-full ${
+              coverFitMode === "contain" ? "object-contain" : "object-cover object-center"
+            }`}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-primary to-secondary"></div>
         )}
-        <div className="absolute inset-0 pattern-overlay"></div>
+        <div className="absolute inset-0 pattern-overlay opacity-30 pointer-events-none"></div>
 
         {/* Cover Photo Edit overlay */}
         {isOwnProfile && isEditingCover && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
-            <div className="w-full h-full flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center z-20 p-4 transition-all duration-200">
+            <div className="w-full h-full flex flex-col items-center justify-center">
               <ProfileImageUpload
                 currentImage={currentUser?.coverPhotoURL}
                 onImageUpload={handleCoverImagePreview}
@@ -254,7 +261,34 @@ export default function ProfileCard({
                 className="w-full h-full"
               />
             </div>
-            {/* Cover Edit Action Buttons */}
+            
+            {/* Fit Mode Toggle - Anchored to Top-Left */}
+            <div className="absolute top-4 left-4 z-30 flex items-center gap-1 bg-black/20 backdrop-blur-sm p-1 rounded-xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => setCoverFitMode("cover")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  coverFitMode === "cover"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                Cover
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoverFitMode("contain")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  coverFitMode === "contain"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                Contain
+              </button>
+            </div>
+
+            {/* Cover Edit Action Buttons - Anchored to Bottom-Right */}
             <div className="absolute bottom-4 right-4 flex space-x-2 z-30">
               <button
                 onClick={(e) => {
@@ -262,7 +296,7 @@ export default function ProfileCard({
                   e.stopPropagation();
                   cancelCoverEdit();
                 }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer active:scale-95 backdrop-blur-md"
               >
                 Cancel
               </button>
@@ -274,7 +308,7 @@ export default function ProfileCard({
                     confirmCoverUpload();
                   }}
                   disabled={updatingCover}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-xl text-xs sm:text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm active:scale-95"
                 >
                   {updatingCover ? "Saving..." : "Save"}
                 </button>
@@ -285,26 +319,23 @@ export default function ProfileCard({
 
         {/* Edit Cover Photo Icon Button (Owner only) */}
         {isOwnProfile && !isEditingCover && (
-          <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10">
+          <div className="absolute bottom-4 right-4 z-10">
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsEditingCover(true);
               }}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white p-2.5 rounded-full transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95"
+              className="bg-slate-900/70 hover:bg-slate-900/90 border border-white/10 backdrop-blur-md text-white p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95 shadow-sm"
               title="Edit cover banner"
             >
               <span className="material-symbols-outlined text-[20px]">photo_camera</span>
             </button>
           </div>
         )}
-      </div>
 
-      {/* Profile Details Header Panel */}
-      <div className="px-6 pb-6 pt-16 md:pt-20 flex flex-col md:flex-row md:items-end justify-between relative">
         {/* Avatar Wrapper overlapping the cover banner */}
-        <div className="absolute -top-16 left-6 md:left-10 w-32 h-32 md:w-40 md:h-40 z-10">
+        <div className="absolute -bottom-16 left-6 md:left-10 w-32 h-32 md:w-40 md:h-40 z-30">
           {/* Hidden File Input for Avatar (Owner only) */}
           {isOwnProfile && (
             <input
@@ -323,7 +354,7 @@ export default function ProfileCard({
                 fileInputRef.current?.click();
               }
             }}
-            className={`w-full h-full rounded-full border-4 border-white bg-white shadow-xl overflow-hidden relative ${
+            className={`w-full h-full rounded-full border-4 border-white bg-white shadow-md overflow-hidden relative ${
               isOwnProfile ? "cursor-pointer group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" : ""
             }`}
           >
@@ -384,7 +415,10 @@ export default function ProfileCard({
             </>
           )}
         </div>
+      </div>
 
+      {/* Profile Details Header Panel */}
+      <div className="px-6 pb-6 pt-16 md:pt-20 flex flex-col md:flex-row md:items-end justify-between relative">
         {/* User Profile Info Info Column */}
         <div className="flex-1 md:ml-48 mt-4 md:mt-0">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
