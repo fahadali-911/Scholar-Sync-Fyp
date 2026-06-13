@@ -27,7 +27,6 @@ import {
   deleteNotification,
   // markAllNotificationsAsRead, // Add this new function import
 } from "../api/FireStore";
-import NotificationsPopup from "../components/NotificationsPopup";
 import ScholarSyncLogo from "../components/ScholarSyncLogo";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext.jsx";
@@ -422,8 +421,8 @@ const Navbar = () => {
       icon: Bell,
       label: "Notifications",
       path: "/notifications",
-      active: isNotificationsOpen,
-      onClick: handleNotificationsClick,
+      active: location.pathname === "/notifications",
+      onClick: () => handleNavigation("/notifications"),
       hasNotification: unreadNotificationsCount > 0,
       notificationCount: unreadNotificationsCount,
     },
@@ -758,15 +757,6 @@ const Navbar = () => {
           )}
         </div>
       </nav>
-
-      {/* Notifications Popup */}
-      <NotificationsPopup
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-        notifications={notifications}
-        onMarkAsRead={handleMarkAsRead}
-        onDeleteNotification={handleDeleteNotification}
-      />
     </>
   );
 };

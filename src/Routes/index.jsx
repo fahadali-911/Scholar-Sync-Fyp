@@ -9,6 +9,7 @@ import Messages from "../pages/Messages";
 import SearchResults from "../pages/SearchResults";
 import PublicFeed from "../pages/PublicFeed";
 import PublicRoute from "../components/PublicRoute";
+import Notifications from "../pages/Notifications";
 
 export const router = createBrowserRouter([
   {
@@ -58,5 +59,9 @@ export const router = createBrowserRouter([
   {
     path: "/search",
     element: <SearchResults />,
+  },
+  {
+    path: "/notifications",
+    element: <Notifications />,
   },
 ]);
