@@ -1,655 +1,266 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { db } from "../firebaseConfig";
-import { getStatus, getUserDataByUID } from "../api/FireStore";
-import { doc, onSnapshot } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
 import {
-  Heart,
-  MessageCircle,
-  Download,
-  Eye,
   Users,
-  TrendingUp,
   UserPlus,
-  LogIn,
-  Loader2,
-  FileText,
+  ArrowRight,
+  Sparkles,
+  Shield,
+  Zap,
+  CheckCircle2,
+  BookOpen,
+  MessageSquare,
   Award,
-  Hash,
+  Lock,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ScholarSyncLogo from "../components/ScholarSyncLogo";
 import PublicNavbar from "../common/PublicNavbar";
 
 const PublicFeed = () => {
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [posts, setPosts] = useState([]);
-  const [userProfiles, setUserProfiles] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
 
-  // Set up real-time listener for posts
-  useMemo(() => {
-    getStatus(setPosts);
-    setLoading(false);
-  }, []);
-
-  // Load user profiles for all post authors when posts change
+  // Auto-dismiss toast after 5 seconds
   useEffect(() => {
-    if (!posts || posts.length === 0) return;
-
-    const loadUserProfiles = async () => {
-      console.log("Loading user profiles for posts...");
-      const profilesMap = { ...userProfiles };
-
-      // Get all unique user IDs from posts
-      const userIds = posts
-        .map((post) => post.currUser?.uid || post.currUser?.id || post.authorId)
-        .filter((id) => id && !profilesMap[id]);
-
-      const uniqueUserIds = [...new Set(userIds)];
-
-      if (uniqueUserIds.length === 0) {
-        console.log("No new user profiles to load");
-        return;
-      }
-
-      console.log("Loading profiles for users:", uniqueUserIds);
-
-      // Load profile data for each user
-      const profilePromises = uniqueUserIds.map(async (userId) => {
-        try {
-          const profileData = await getUserDataByUID(userId);
-          if (profileData) {
-            profilesMap[userId] = profileData;
-          }
-        } catch (error) {
-          console.error(`Error loading profile for ${userId}:`, error);
-        }
-      });
-
-      await Promise.all(profilePromises);
-      console.log("Loaded user profiles:", profilesMap);
-      setUserProfiles(profilesMap);
-    };
-
-    loadUserProfiles();
-  }, [posts]);
-
-  // Set up real-time listeners for user profiles that appear in posts
-  useEffect(() => {
-    if (!posts || posts.length === 0) return;
-
-    const userIds = posts
-      .map((post) => post.currUser?.uid || post.currUser?.id || post.authorId)
-      .filter((id) => id);
-
-    const uniqueUserIds = [...new Set(userIds)];
-
-    if (uniqueUserIds.length === 0) return;
-
-    console.log("Setting up real-time profile listeners for:", uniqueUserIds);
-
-    const unsubscribes = [];
-
-    // Set up individual listeners for each user
-    uniqueUserIds.forEach((userId) => {
-      if (!userId) return;
-
-      const userRef = doc(db, "users", userId);
-
-      const unsubscribe = onSnapshot(
-        userRef,
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const userData = { id: docSnap.id, ...docSnap.data() };
-            console.log(`Profile updated for user ${userId}:`, userData);
-
-            setUserProfiles((prev) => ({
-              ...prev,
-              [userId]: userData,
-            }));
-          } else {
-            console.log(`User profile not found for: ${userId}`);
-            setUserProfiles((prev) => {
-              const updated = { ...prev };
-              delete updated[userId];
-              return updated;
-            });
-          }
-        },
-        (error) => {
-          console.error(
-            `Error in real-time profile listener for ${userId}:`,
-            error
-          );
-        }
-      );
-
-      unsubscribes.push(unsubscribe);
-    });
-
-    // Cleanup function
-    return () => {
-      console.log(
-        "Cleaning up profile listeners for",
-        uniqueUserIds.length,
-        "users"
-      );
-      unsubscribes.forEach((unsubscribe) => {
-        if (typeof unsubscribe === "function") {
-          unsubscribe();
-        }
-      });
-    };
-  }, [posts]);
-
-  // Generate consistent initials
-  const getProfileInitials = (name) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .filter((n) => n.length > 0)
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Get current profile data for a user
-  const getCurrentUserProfile = (post) => {
-    const userId = post.currUser?.uid || post.currUser?.id || post.authorId;
-    return userProfiles[userId] || post.currUser || {};
-  };
-
-  // Get profile image URL with real-time data
-  const getProfileImageURL = (post) => {
-    const currentProfile = getCurrentUserProfile(post);
-    if (!currentProfile) return null;
-
-    return (
-      currentProfile.photoURL ||
-      currentProfile.profilePicture ||
-      currentProfile.avatar ||
-      currentProfile.image ||
-      post.currUser?.photoURL ||
-      post.currUser?.profilePicture ||
-      null
-    );
-  };
-
-  // Get user display name with real-time data
-  const getUserDisplayName = (post) => {
-    const currentProfile = getCurrentUserProfile(post);
-    if (!currentProfile) return "Anonymous";
-
-    return (
-      currentProfile.name ||
-      currentProfile.displayName ||
-      currentProfile.fullName ||
-      post.currUser?.name ||
-      post.author ||
-      (currentProfile.email && currentProfile.email.split("@")[0]) ||
-      (post.currUser?.email && post.currUser.email.split("@")[0]) ||
-      "Anonymous"
-    );
-  };
-
-  // Generate consistent gradient colors
-  const getConsistentGradient = (identifier) => {
-    const gradients = [
-      "from-blue-500 to-purple-600",
-      "from-green-500 to-blue-600",
-      "from-purple-500 to-pink-600",
-      "from-yellow-500 to-red-600",
-      "from-indigo-500 to-purple-600",
-      "from-pink-500 to-rose-600",
-      "from-cyan-500 to-blue-600",
-      "from-emerald-500 to-teal-600",
-    ];
-
-    if (!identifier) return gradients[0];
-
-    let hash = 0;
-    for (let i = 0; i < identifier.length; i++) {
-      const char = identifier.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-
-    const index = Math.abs(hash) % gradients.length;
-    return gradients[index];
-  };
-
-  // UserAvatar component for posts
-  const UserAvatar = ({ post, size = "lg", onClick }) => {
-    const currentProfile = getCurrentUserProfile(post);
-    const profileImageURL = getProfileImageURL(post);
-    const displayName = getUserDisplayName(post);
-    const userId =
-      post.currUser?.uid || post.currUser?.id || post.authorId || post.id;
-
-    // Size classes
-    const sizeClasses = {
-      sm: "w-8 h-8 text-sm",
-      md: "w-10 h-10 text-sm",
-      lg: "w-12 h-12 text-base",
-      xl: "w-16 h-16 text-lg",
-    };
-
-    const sizeClass = sizeClasses[size] || sizeClasses.lg;
-    const gradient = getConsistentGradient(userId || displayName);
-
-    return (
-      <div
-        onClick={onClick}
-        className={`${sizeClass} rounded-full overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-gray-100 hover:border-blue-200 flex-shrink-0 relative`}
-      >
-        {profileImageURL ? (
-          <>
-            <img
-              key={`profile-${userId}-${profileImageURL}-${currentProfile.updatedAt || Date.now()
-                }`}
-              src={profileImageURL}
-              alt={displayName}
-              className="w-full h-full rounded-full object-cover"
-              onLoad={(e) => {
-                const initialsDiv = e.target.nextElementSibling;
-                if (
-                  initialsDiv &&
-                  initialsDiv.classList.contains("initials-fallback")
-                ) {
-                  initialsDiv.style.display = "none";
-                }
-                console.log("Profile image loaded for:", displayName);
-              }}
-              onError={(e) => {
-                console.log("Profile image failed to load for:", displayName);
-                e.target.style.display = "none";
-                const initialsDiv = e.target.nextElementSibling;
-                if (
-                  initialsDiv &&
-                  initialsDiv.classList.contains("initials-fallback")
-                ) {
-                  initialsDiv.style.display = "flex";
-                }
-              }}
-            />
-            <div
-              className={`initials-fallback absolute inset-0 w-full h-full bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white font-bold`}
-              style={{ display: "none" }}
-            >
-              {getProfileInitials(displayName)}
-            </div>
-          </>
-        ) : (
-          <div
-            className={`w-full h-full bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white font-bold`}
-          >
-            {getProfileInitials(displayName)}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Handle interactions that require authentication
-  const handleAuthRequired = (action) => {
-    const actionMessages = {
-      like: "Please sign up or log in to like posts",
-      comment: "Please sign up or log in to comment on posts",
-      profile: "Please sign up or log in to view user profiles",
-      download: "Please sign up or log in to download files",
-    };
-
-    if (
-      window.confirm(
-        `${actionMessages[action]}. Would you like to sign up now?`
-      )
-    ) {
-      navigate("/register");
-    }
-  };
-
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
-  };
-
-  const filteredPosts = posts.filter((post) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "papers")
-      return (
-        post.type === "research-paper" || post.postType === "research-paper"
-      );
-    if (activeFilter === "discussions")
-      return post.type === "discussion" || post.postType === "discussion";
-    if (activeFilter === "projects")
-      return post.type === "project" || post.postType === "project";
-    return true;
-  });
-
-  const getPostTypeStyle = (type) => {
-    switch (type) {
-      case "research-paper":
-        return "bg-blue-50/70 text-blue-600 border-blue-100/80";
-      case "discussion":
-        return "bg-red-50/80 text-red-600 border-red-100";
-      case "project":
-        return "bg-amber-50/70 text-amber-600 border-amber-100/80";
-      default:
-        return "bg-slate-50/70 text-slate-600 border-slate-100/80";
-    }
-  };
-
-  const getPostTypeLabel = (type) => {
-    switch (type) {
-      case "research-paper":
-        return "Research Paper";
-      case "discussion":
-        return "Discussion";
-      case "project":
-        return "Project";
-      default:
-        return "Post";
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading Scholar Sync...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [showToast]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 font-body-md relative">
       {/* Header */}
       <PublicNavbar />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-slate-50/50 via-white to-slate-50/30 py-20 sm:py-24 border-b border-slate-100/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-primary tracking-tight mb-6 leading-tight font-display-lg">
-            Discover Academic <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
-              Research & Collaboration
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-dark via-primary to-primary-light text-white py-24 sm:py-32 border-b border-primary-light">
+        {/* Background Decorative Blobs */}
+        <div className="absolute inset-0 pattern-overlay opacity-[0.03]"></div>
+        <div className="absolute top-1/4 left-1/10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/10 w-96 h-96 bg-accent/15 rounded-full blur-3xl -z-10"></div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-accent text-xs font-semibold mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>The Academic Collaboration Hub</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight font-display-lg">
+            Connect. Share. Collaborate. <br />
+            <span className="bg-gradient-to-r from-accent via-[#60A5FA] to-white bg-clip-text text-transparent">
+              Advance Academic Science
             </span>
-          </h2>
-          <p className="text-base sm:text-lg text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed font-body-md font-medium">
-            Join thousands of researchers, students, and academics sharing
-            knowledge, collaborating on projects, and advancing science
-            together.
+          </h1>
+
+          <p className="text-base sm:text-lg text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed font-body-md font-medium">
+            Scholar Sync is the social and collaborative network designed for researchers, students, and academics. Publish preprints, participate in peer discussions, and form dedicated research teams.
           </p>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3.5 bg-primary hover:bg-primary-light text-white rounded-full font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
+              className="px-8 py-4 bg-secondary hover:bg-blue-700 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm flex items-center justify-center gap-2"
             >
-              Join Scholar Sync
+              <UserPlus className="w-4 h-4" />
+              <span>Join Scholar Sync</span>
             </button>
             <button
-              onClick={() => navigate("/login")}
-              className="px-8 py-3.5 border border-slate-200 text-slate-700 rounded-full font-semibold hover:bg-slate-50 hover:border-slate-300 shadow-sm hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
+              onClick={() => setShowToast(true)}
+              className="px-8 py-4 bg-white/10 hover:bg-white/15 border border-white/20 text-white rounded-full font-semibold hover:border-white/45 shadow-sm hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm flex items-center justify-center gap-2"
             >
-              Log In
+              <span>Explore Latest Activity</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stats Section */}
-
-      {/* Main Feed */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="space-y-6">
-          {/* Feed Header */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)]">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
-                  Latest Research & Discussions
-                </h3>
-                <p className="text-slate-500 text-sm font-medium">
-                  Explore what the academic community is sharing
-                </p>
+      {/* Stats Quick Grid */}
+      <section className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { value: "5,000+", label: "Active Scholars", icon: Users, color: "text-blue-500" },
+            { value: "12,000+", label: "Papers Published", icon: BookOpen, color: "text-emerald-500" },
+            { value: "450+", label: "Collaborative Projects", icon: Award, color: "text-amber-500" },
+            { value: "25,000+", label: "Discussions & Likes", icon: MessageSquare, color: "text-rose-500" },
+          ].map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div key={idx} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-lg flex items-center gap-4 hover:shadow-xl transition-all duration-300">
+                <div className={`p-3 rounded-xl bg-slate-50 ${stat.color}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-xl sm:text-2xl font-bold text-slate-900 leading-none mb-1">{stat.value}</h4>
+                  <p className="text-xs text-slate-500 font-medium">{stat.label}</p>
+                </div>
               </div>
+            );
+          })}
+        </div>
+      </section>
 
-              {/* Filter Tabs */}
-              <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
-                {[
-                  { key: "all", label: "All" },
-                  { key: "papers", label: "Papers" },
-                  { key: "discussions", label: "Discussions" },
-                  { key: "projects", label: "Projects" },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => handleFilterChange(tab.key)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                      activeFilter === tab.key
-                        ? "bg-[#0B192C] text-white shadow-sm"
-                        : "bg-transparent text-slate-500 border border-slate-200 hover:text-[#0B192C] hover:border-slate-300 hover:bg-slate-100/50"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+      {/* Key Features Section */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4 font-headline-lg">
+            Designed for Modern Academic Workflows
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto font-body-md">
+            Explore the specialized features built specifically to streamline scientific knowledge sharing and network creation.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Card 1 */}
+          <div className="glass-card p-8 rounded-3xl border border-slate-100 bg-white shadow-md flex gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Research Repository</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Upload and publish preprints, journal drafts, and conference files. Allow colleagues to read, download, and review your publications instantly.
+              </p>
             </div>
           </div>
 
-          {/* Posts */}
-          <div className="space-y-6">
-            {filteredPosts.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-[0_4px_20px_-4px_rgba(15,23,42,0.02)]">
-                <div className="text-4xl mb-4">🔬</div>
-                <h3 className="text-lg font-medium text-slate-900 mb-2">
-                  No posts yet
-                </h3>
-                <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                  Be the first to share your research with the community!
-                </p>
-                <button
-                  onClick={() => navigate("/register")}
-                  className="px-6 py-2.5 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-full font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer text-sm"
-                >
-                  Join Now
-                </button>
-              </div>
-            ) : (
-              filteredPosts.map((post, index) => {
-                const currentProfile = getCurrentUserProfile(post);
-                const displayName = getUserDisplayName(post);
+          {/* Card 2 */}
+          <div className="glass-card p-8 rounded-3xl border border-slate-100 bg-white shadow-md flex gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 flex-shrink-0">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Academic Discussions</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Post comments, raise questions, and engage in real-time scholastic debates. Connect with fellow experts globally to discuss research findings.
+              </p>
+            </div>
+          </div>
 
-                return (
-                  <article
-                    key={`post-${post.id}-${currentProfile.updatedAt || index}`}
-                    className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                  >
-                    {/* Post Header */}
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center space-x-4">
-                        <UserAvatar
-                          post={post}
-                          size="lg"
-                          onClick={() => handleAuthRequired("profile")}
-                        />
-                        <div>
-                          <button
-                            onClick={() => handleAuthRequired("profile")}
-                            className="font-semibold cursor-pointer hover:text-[#00A6FB] text-slate-900 transition-colors text-left"
-                          >
-                            {displayName}
-                          </button>
-                          <p className="text-xs text-slate-400">
-                            {post.timeStamp
-                              ? new Date(
-                                  post.timeStamp.seconds * 1000
-                                ).toLocaleDateString()
-                              : post.time || "Recently"}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPostTypeStyle(
-                          post.postType || post.type
-                        )}`}
-                      >
-                        {getPostTypeLabel(post.postType || post.type)}
-                      </span>
-                    </div>
+          {/* Card 3 */}
+          <div className="glass-card p-8 rounded-3xl border border-slate-100 bg-white shadow-md flex gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Project Collaboration</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Start or join collaborative research projects. Post milestones, co-author documents, and find research partners across universities.
+              </p>
+            </div>
+          </div>
 
-                    {/* Post Content */}
-                    <div className="mb-5">
-                      <h4 className="text-xl font-semibold text-slate-900 mb-2.5 leading-snug">
-                        {post.title || post.status}
-                      </h4>
-                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-                        {post.description || post.excerpt || post.status}
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-5">
-                        {post.tags.map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 rounded-full text-xs font-medium hover:border-[#00A6FB] hover:text-[#00A6FB] transition-colors cursor-pointer"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* File Preview (Attachment Component) */}
-                    {post.fileURL && (
-                      <div className="mb-5 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-slate-800 text-sm truncate">
-                              {post.fileName || "Attached file"}
-                            </p>
-                            <p className="text-xs text-slate-400 truncate mt-0.5">
-                              {post.fileType
-                                ? post.fileType.toUpperCase()
-                                : "File"}{" "}
-                              • Public document
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleAuthRequired("download")}
-                            className="px-4 py-1.5 bg-[#0B192C] hover:bg-[#14263f] text-white rounded-lg text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 flex-shrink-0 cursor-pointer"
-                          >
-                            View
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Post Actions */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-4 border-t border-slate-100 gap-4">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleAuthRequired("like")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-rose-600 hover:bg-rose-50/50 transition-all duration-200 cursor-pointer"
-                        >
-                          <Heart className="w-4 h-4" />
-                          <span>Like ({post.likes || 0})</span>
-                        </button>
-                        <button
-                          onClick={() => handleAuthRequired("comment")}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-[#00A6FB] hover:bg-sky-50/50 transition-all duration-200 cursor-pointer"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          <span>Comment ({post.comments || 0})</span>
-                        </button>
-                      </div>
-
-                      {(post.postType === "research-paper" ||
-                        post.type === "research-paper") &&
-                        post.fileURL && (
-                          <button
-                            onClick={() => handleAuthRequired("download")}
-                            className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#0B192C] hover:bg-[#14263f] text-white hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
-                          >
-                            <Download className="w-4 h-4" />
-                            <span>Download PDF</span>
-                          </button>
-                        )}
-
-                      {(post.postType === "project" ||
-                        post.type === "project") && (
-                          <button
-                            onClick={() => handleAuthRequired("profile")}
-                            className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#00A6FB] hover:bg-[#0086cc] text-white hover:shadow transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span>View Project</span>
-                          </button>
-                        )}
-                    </div>
-
-                    {/* Show likes info without links for public users */}
-                    {post.likedBy && post.likedBy.length > 0 && (
-                      <div className="mt-3.5 pt-3 border-t border-slate-50">
-                        <p className="text-xs text-slate-400 font-medium">
-                          {post.likedBy.length === 1
-                            ? `Liked by ${
-                                post.likedBy[0].name ||
-                                post.likedBy[0].email?.split("@")[0] ||
-                                "someone"
-                              }`
-                            : post.likedBy.length === 2
-                            ? `Liked by ${
-                                post.likedBy[0].name ||
-                                post.likedBy[0].email?.split("@")[0] ||
-                                "someone"
-                              } and ${
-                                post.likedBy[1].name ||
-                                post.likedBy[1].email?.split("@")[0] ||
-                                "1 other"
-                              }`
-                            : `Liked by ${
-                                post.likedBy[0].name ||
-                                post.likedBy[0].email?.split("@")[0] ||
-                                "someone"
-                              } and ${post.likedBy.length - 1} others`}
-                        </p>
-                      </div>
-                    )}
-                  </article>
-                );
-              })
-            )}
+          {/* Card 4 */}
+          <div className="glass-card p-8 rounded-3xl border border-slate-100 bg-white shadow-md flex gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
+              <Award className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Academic Presence</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Build a verified scholar profile. Showcase your curriculum vitae, active projects, publication list, and grow your professional presence.
+              </p>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
 
-      {/* Call to Action */}
-      <div className="bg-gradient-to-br from-primary to-primary-dark py-20 border-t border-slate-900/40 relative overflow-hidden">
+      {/* How it Works Section */}
+      <section className="bg-slate-100/60 py-20 border-t border-b border-slate-200/40">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-4 font-headline-lg">
+              Start Redefining Your Research Journey
+            </h2>
+            <p className="text-slate-600 max-w-2xl mx-auto font-body-md">
+              Getting started on Scholar Sync takes only a few minutes. Follow these three steps.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {[
+              { step: "01", title: "Create Your Account", desc: "Sign up with your academic or professional email, choose your research fields, and fill out your portfolio profile." },
+              { step: "02", title: "Share & Discuss Work", desc: "Upload PDFs of papers or start project listings. Engage the community with insightful comments and discussions." },
+              { step: "03", title: "Form Collaborations", desc: "Connect with interested academics, message them, and create private or public collaborative project spaces." }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-white rounded-2xl border border-slate-200/50 p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <span className="text-5xl font-extrabold bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent block mb-4 leading-none">
+                     {item.step}
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Scholar Sync (Benefits Grid) */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4 font-headline-lg">
+            Why Choose Scholar Sync?
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto font-body-md">
+            Join a platform built strictly around the needs of the academic and research community.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
+              <Shield className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Safe & Credible</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              We foster a professional scholarly environment. Profiles are built around academic institutions and real publications.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-6">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Real-Time Networking</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Discuss findings instantly. Receive feedback on preprints, share updates, and communicate seamlessly via private chat messages.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Open Access First</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Scholar Sync believes in barrier-free research dissemination. Discover and share scientific publications with zero paywalls.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action Callout */}
+      <section className="bg-gradient-to-br from-primary-dark to-primary py-20 text-white relative overflow-hidden">
         <div className="absolute inset-0 pattern-overlay opacity-[0.03]"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight font-display-lg">
-            Ready to Join the Community?
-          </h3>
-          <p className="text-base sm:text-lg text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed font-body-md font-medium">
-            Connect with researchers worldwide, share your work, and collaborate
-            on groundbreaking projects.
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight font-display-lg">
+            Ready to Accelerate Your Collaborative Reach?
+          </h2>
+          <p className="text-base sm:text-lg text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
+            Create your account today, highlight your publications, and connect with peers globally.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3.5 bg-white text-primary rounded-full font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
+              className="px-8 py-3.5 bg-white text-primary hover:bg-slate-100 rounded-full font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer w-full sm:w-auto text-sm"
             >
-              Sign Up Free
+              Sign Up for Free
             </button>
             <button
               onClick={() => navigate("/login")}
@@ -659,6 +270,44 @@ const PublicFeed = () => {
             </button>
           </div>
         </div>
+      </section>
+
+      {/* Premium Sleek Toast Notification */}
+      <div
+        className={`fixed bottom-6 right-6 z-50 max-w-md w-[calc(100%-3rem)] sm:w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xl transition-all duration-300 ease-out flex items-start gap-3.5 transform ${
+          showToast
+            ? "translate-y-0 opacity-100 scale-100"
+            : "translate-y-10 opacity-0 scale-95 pointer-events-none"
+        }`}
+        role="alert"
+      >
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[#00A6FB] border border-blue-100 dark:border-blue-800/50 shadow-sm">
+          <Lock className="w-5 h-5" />
+        </div>
+        <div className="flex-1 pt-0.5">
+          <p className="text-sm font-bold text-slate-900 dark:text-white">
+            Authentication Required
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            Authentication required. Please{" "}
+            <button
+              onClick={() => {
+                setShowToast(false);
+                navigate("/register");
+              }}
+              className="text-[#00A6FB] hover:text-[#0086cc] font-bold underline transition-colors focus:outline-none"
+            >
+              Sign Up
+            </button>{" "}
+            to explore live academic activity.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowToast(false)}
+          className="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all focus:outline-none"
+        >
+          <X className="w-4.5 h-4.5" />
+        </button>
       </div>
     </div>
   );

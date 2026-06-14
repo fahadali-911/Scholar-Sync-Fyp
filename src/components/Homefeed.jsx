@@ -282,9 +282,8 @@ const Homefeed = ({ currUser }) => {
         {profileImageURL ? (
           <>
             <img
-              key={`profile-${userId}-${profileImageURL}-${
-                currentProfile.updatedAt || Date.now()
-              }`} // Force refresh with unique key
+              key={`profile-${userId}-${profileImageURL}-${currentProfile.updatedAt || Date.now()
+                }`} // Force refresh with unique key
               src={profileImageURL}
               alt={displayName}
               className="w-full h-full rounded-full object-cover"
@@ -561,11 +560,10 @@ const Homefeed = ({ currUser }) => {
                   <button
                     key={tab.key}
                     onClick={() => handleFilterChange(tab.key)}
-                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
-                      activeFilter === tab.key
+                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${activeFilter === tab.key
                         ? "bg-primary text-white shadow-sm"
                         : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -593,9 +591,8 @@ const Homefeed = ({ currUser }) => {
 
                   return (
                     <div
-                      key={`post-${post.id}-${
-                        currentProfile.updatedAt || index
-                      }`} // Dynamic key based on profile updates
+                      key={`post-${post.id}-${currentProfile.updatedAt || index
+                        }`} // Dynamic key based on profile updates
                       className="premium-card p-4 sm:p-6"
                       style={{
                         animationDelay: `${index * 100}ms`,
@@ -621,8 +618,8 @@ const Homefeed = ({ currUser }) => {
                             <p className="text-sm text-gray-500">
                               {post.timeStamp
                                 ? new Date(
-                                    post.timeStamp.seconds * 1000
-                                  ).toLocaleDateString()
+                                  post.timeStamp.seconds * 1000
+                                ).toLocaleDateString()
                                 : post.time || "Recently"}
                             </p>
                           </div>
@@ -683,8 +680,8 @@ const Homefeed = ({ currUser }) => {
                                         .pop()
                                         ?.toLowerCase()
                                     )
-                                  ? "🖼️"
-                                  : "📎"}
+                                    ? "🖼️"
+                                    : "📎"}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
@@ -694,24 +691,23 @@ const Homefeed = ({ currUser }) => {
                               <p className="text-xs sm:text-sm text-gray-500 truncate">
                                 {post.fileType
                                   ? post.fileType.toUpperCase()
-                                  : "File"}{" "}
-                                • Click to view
+                                  : "File"}
                               </p>
                             </div>
 
                             {/* Check if it's an image */}
                             {post.fileType?.includes("image") ||
-                            [
-                              "jpg",
-                              "jpeg",
-                              "png",
-                              "gif",
-                              "bmp",
-                              "webp",
-                              "svg",
-                            ].includes(
-                              post.fileName?.split(".").pop()?.toLowerCase()
-                            ) ? (
+                              [
+                                "jpg",
+                                "jpeg",
+                                "png",
+                                "gif",
+                                "bmp",
+                                "webp",
+                                "svg",
+                              ].includes(
+                                post.fileName?.split(".").pop()?.toLowerCase()
+                              ) ? (
                               // For images: only show preview button
                               <button
                                 onClick={() => handleFilePreview(post)}
@@ -760,25 +756,22 @@ const Homefeed = ({ currUser }) => {
                           <button
                             onClick={() => handleLike(post.id)}
                             disabled={likingStates[post.id]}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                              isPostLikedByCurrentUser(post)
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isPostLikedByCurrentUser(post)
                                 ? "bg-red-500 text-white shadow-sm"
                                 : "bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-600"
-                            } ${
-                              likingStates[post.id]
+                              } ${likingStates[post.id]
                                 ? "opacity-50 cursor-not-allowed"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {likingStates[post.id] ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <Heart
-                                className={`w-4 h-4 ${
-                                  isPostLikedByCurrentUser(post)
+                                className={`w-4 h-4 ${isPostLikedByCurrentUser(post)
                                     ? "fill-current"
                                     : ""
-                                }`}
+                                  }`}
                               />
                             )}
                             <button
@@ -812,31 +805,31 @@ const Homefeed = ({ currUser }) => {
                             post.type === "research-paper" ||
                             post.fileType?.includes("pdf") ||
                             post.fileName?.toLowerCase().endsWith(".pdf")) && (
-                            <button
-                              onClick={() => setSummarizerModal({ isOpen: true, post })}
-                              className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-200 cursor-pointer"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              <span>AI Summary</span>
-                            </button>
-                          )}
+                              <button
+                                onClick={() => setSummarizerModal({ isOpen: true, post })}
+                                className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-200 cursor-pointer"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                                <span>AI Summary</span>
+                              </button>
+                            )}
                         </div>
                         {(post.postType === "research-paper" ||
                           post.type === "research-paper") &&
                           post.fileURL &&
                           // Check if it's an image
                           (post.fileType?.includes("image") ||
-                          [
-                            "jpg",
-                            "jpeg",
-                            "png",
-                            "gif",
-                            "bmp",
-                            "webp",
-                            "svg",
-                          ].includes(
-                            post.fileName?.split(".").pop()?.toLowerCase()
-                          ) ? (
+                            [
+                              "jpg",
+                              "jpeg",
+                              "png",
+                              "gif",
+                              "bmp",
+                              "webp",
+                              "svg",
+                            ].includes(
+                              post.fileName?.split(".").pop()?.toLowerCase()
+                            ) ? (
                             // For images: only show preview button
                             <button
                               onClick={() => handleFilePreview(post)}
@@ -873,11 +866,11 @@ const Homefeed = ({ currUser }) => {
                           ))}
                         {(post.postType === "project" ||
                           post.type === "project") && (
-                          <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer">
-                            <Eye className="w-4 h-4" />
-                            <span>View Project</span>
-                          </button>
-                        )}
+                            <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200 cursor-pointer">
+                              <Eye className="w-4 h-4" />
+                              <span>View Project</span>
+                            </button>
+                          )}
                       </div>
 
                       {/* Engagement Info */}
@@ -890,25 +883,21 @@ const Homefeed = ({ currUser }) => {
                             className="text-sm text-gray-500 hover:text-gray-700 hover:underline transition-colors"
                           >
                             {post.likedBy.length === 1
-                              ? `Liked by ${
-                                  post.likedBy[0].name ||
-                                  post.likedBy[0].email?.split("@")[0] ||
-                                  "someone"
-                                }`
+                              ? `Liked by ${post.likedBy[0].name ||
+                              post.likedBy[0].email?.split("@")[0] ||
+                              "someone"
+                              }`
                               : post.likedBy.length === 2
-                              ? `Liked by ${
-                                  post.likedBy[0].name ||
-                                  post.likedBy[0].email?.split("@")[0] ||
-                                  "someone"
-                                } and ${
-                                  post.likedBy[1].name ||
-                                  post.likedBy[1].email?.split("@")[0] ||
-                                  "1 other"
+                                ? `Liked by ${post.likedBy[0].name ||
+                                post.likedBy[0].email?.split("@")[0] ||
+                                "someone"
+                                } and ${post.likedBy[1].name ||
+                                post.likedBy[1].email?.split("@")[0] ||
+                                "1 other"
                                 }`
-                              : `Liked by ${
-                                  post.likedBy[0].name ||
-                                  post.likedBy[0].email?.split("@")[0] ||
-                                  "someone"
+                                : `Liked by ${post.likedBy[0].name ||
+                                post.likedBy[0].email?.split("@")[0] ||
+                                "someone"
                                 } and ${post.likedBy.length - 1} others`}
                           </button>
                         </div>

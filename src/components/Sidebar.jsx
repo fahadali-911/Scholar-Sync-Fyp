@@ -49,17 +49,16 @@ export default function Sidebar({ isOpen, onClose, onSettingsClick }) {
                   key={index}
                   href={item.path}
                   onClick={(e) => handleNavigation(item.path, e)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-label-md text-label-md ${
-                    item.active
-                      ? "bg-white text-primary font-bold border-l-4 border-primary shadow-sm rounded-r-xl"
-                      : "text-text-muted hover:bg-surface-container hover:text-primary"
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-label-md text-label-md ${item.active
+                    ? "bg-white text-primary font-bold border-l-4 border-primary shadow-sm rounded-r-xl"
+                    : "text-text-muted hover:bg-surface-container hover:text-primary"
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   {item.label}
                 </a>
               ))}
-              
+
               {/* Settings Link */}
               <button
                 onClick={(e) => {
@@ -102,17 +101,16 @@ export default function Sidebar({ isOpen, onClose, onSettingsClick }) {
                   key={index}
                   href={item.path}
                   onClick={(e) => handleNavigation(item.path, e)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-label-md text-label-md ${
-                    item.active
-                      ? "bg-slate-100 text-primary font-bold border-l-4 border-primary shadow-sm rounded-r-xl"
-                      : "text-text-muted hover:bg-slate-50 hover:text-primary"
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-label-md text-label-md ${item.active
+                    ? "bg-slate-100 text-primary font-bold border-l-4 border-primary shadow-sm rounded-r-xl"
+                    : "text-text-muted hover:bg-slate-50 hover:text-primary"
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   {item.label}
                 </a>
               ))}
-              
+
               <button
                 onClick={(e) => {
                   e.preventDefault();
